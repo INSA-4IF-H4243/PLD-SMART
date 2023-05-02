@@ -1,2 +1,5 @@
 img/
 read_img.py
+build/
+smart.egg-info/
+Video/__pycache__/
