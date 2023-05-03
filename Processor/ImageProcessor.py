@@ -1,30 +1,32 @@
 from rembg import remove, new_session
-from ..Video.Image import Image
+from ..video.Image import Image
 from skimage.restoration import estimate_sigma
+
+
+def estimate_noise(img):
+    """
+    Parameters
+    ----------
+    img : ndarray
+        Input image 3-dim
+
+    Returns
+    -------
+    float
+        Estimate of the noise standard deviation of the image
+    """
+    return estimate_sigma(img, average_sigmas=True, channel_axis=-1)
+
 
 class ImageProcessor:
     def __init__(self):
         pass
 
-    def estimate_noise(self, img):
-        """
-        Parameters
-        ----------
-        img : ndarray
-            Input image 3-dim
-        
-        Returns
-        -------
-        float
-            Estimate of the noise standard deviation of the image
-        """
-        return estimate_sigma(img, average_sigmas=True, channel_axis=-1)
-
-    def remove_background(self, input_path: str, threshold=0.3):    
-        model_name = "u2netp" if (self.estimate_noise(input_path) < threshold) else "u2net_human_seg"
-        session = new_session(model_name=model_name)
+    def remove_background(self, input_path: str, threshold=0.3):
         input_obj = Image.load_image(input_path)
         input_img = input_obj.image
+        model_name = "u2netp" if (estimate_noise(input_img) < threshold) else "u2net_human_seg"
+        session = new_session(model_name=model_name)
         output = remove(input_img, session=session, post_process_mask=True)
         return output
 
