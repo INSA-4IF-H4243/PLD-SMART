@@ -3,3 +3,5 @@ read_img.py
 build/
 smart.egg-info/
 Video/__pycache__/
+/venv/
+/TestRemoveBackground/

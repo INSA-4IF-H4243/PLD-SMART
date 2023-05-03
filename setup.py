@@ -15,5 +15,5 @@ setup(name='smart',
     packages=['smart.video'],
     package_dir={'smart.video': './Video'},
     install_requires=['keras', 'tensorflow', 'numpy', 'scipy',
-                      'matplotlib', 'opencv-python', 'imageio']
+                      'matplotlib', 'opencv-python', 'imageio', 'rembg']
     )
