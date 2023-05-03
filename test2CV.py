@@ -12,9 +12,25 @@ contours, hierarchy = cv2.findContours(canny,
 print("Number of Contours = " ,len(contours))
 cv2.imshow('Canny Edges', canny)
 
+# closed_contours = []
 
-cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
-
+# for cnt in contours:
+#    if cv2.isContourConvex(cnt) == True:
+#       closed_contours.append(cnt)
+#    else:
+#       pass
+# cv2.drawContours(img, closed_contours, -1, (0, 255, 0), 3)
+import random
+i =0
+for contour in contours:
+   i+=1
+   test=cv2.arcLength(contour,True)
+   print(test)
+   if(50>test>10):
+      color = tuple(np.random.random(size=3) * 256)
+      cv2.drawContours(img, contour, -1, color, 3)
+   
 cv2.imshow('Contours', img)
+print(i)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
