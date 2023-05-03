@@ -1,31 +1,32 @@
 from rembg import remove, new_session
-from PIL import Image
-import cv2 as cv
-import sys
-import numpy as np
+from ..Video.Image import Image
+from skimage.restoration import estimate_sigma
 
+class ImageProcessor:
+    def __init__(self):
+        pass
 
-def load_image(path: str):
-    image = cv.imread(path)
-    if image is None:
-        print("Could not read the image.")
-        sys.exit()
-    return image
+    def estimate_noise(self, img):
+        """
+        Parameters
+        ----------
+        img : ndarray
+            Input image 3-dim
+        
+        Returns
+        -------
+        float
+            Estimate of the noise standard deviation of the image
+        """
+        return estimate_sigma(img, average_sigmas=True, channel_axis=-1)
 
-
-def save_image(path: str, image):
-    cv.imwrite(path, image)
-    return
-
-
-def remove_background(input_path: str, output_path: str, use_u2netp: bool = False):
-    output_path = "..\\TestRemoveBackground\\" + output_path
-    model_name = "u2netp" if use_u2netp else "u2net_human_seg"
-    session = new_session(model_name=model_name)
-    input = Image.open(input_path)
-    output = remove(input, session=session, post_process_mask=True)
-    output.save(output_path)
-    return
+    def remove_background(self, input_path: str, threshold=0.3):    
+        model_name = "u2netp" if (self.estimate_noise(input_path) < threshold) else "u2net_human_seg"
+        session = new_session(model_name=model_name)
+        input_obj = Image.load_image(input_path)
+        input_img = input_obj.image
+        output = remove(input_img, session=session, post_process_mask=True)
+        return output
 
 
 '''

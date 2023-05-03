@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 
-
 class Video(object):
     def __init__(self, path: str, frames):
         self.path = path
@@ -11,9 +10,9 @@ class Video(object):
     def read_video(video, path: str):
         cap = cv2.VideoCapture(path)
         frames = []
-        while cap.isOpened():
+        while(cap.isOpened()):
             ret, frame = cap.read()
-            if ret is False:
+            if ret == False:
                 break
             frames.append(frame)
         cap.release()

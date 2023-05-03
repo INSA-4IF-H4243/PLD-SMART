@@ -3,17 +3,17 @@
 """
 Created on Tue 2 May 2023
 
-@author : minh.ngo
+@author : INSA Hexanome H4243 - 4IF
 """
 from setuptools import setup
 
 setup(name='smart',
     description='Models for scripting tennis matches',
-    author="Minh NGO",
-    author_email="ngoc-minh.ngo@insa-lyon.fr",
+    author="INSA Hexanome H4243 - 4IF",
     version='1.0',
-    packages=['smart.video'],
-    package_dir={'smart.video': './Video'},
-    install_requires=['keras', 'tensorflow', 'numpy', 'scipy',
-                      'matplotlib', 'opencv-python', 'imageio', 'rembg']
+    packages=['smart.video', 'smart.processor'],
+    package_dir={'smart.video': './Video',
+                 'smart.processor': './Processor'},
+    install_requires=['keras', 'tensorflow',
+                      'matplotlib', 'opencv-python', 'rembg']
     )
