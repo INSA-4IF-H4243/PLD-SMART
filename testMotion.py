@@ -19,14 +19,7 @@ def englobant(rec1, rec2):
     rec3 = (x1,y1,w,h)
     return rec3
 
-
-#cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('v.mp4')
-
-ret, frame1 = cap.read()
-ret, frame2 = cap.read()
-
-while cap.isOpened():
+def find_contour_joueur(frame1, frame2):
     diff = cv2.absdiff(frame1, frame2)
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
@@ -51,7 +44,39 @@ while cap.isOpened():
         (x, y, w, h) = rec
         cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
         #cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
-    cv2.imshow("feed", frame1)
+    
+    return(frame1)
+
+#cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('v.mp4')
+
+ret, frame1 = cap.read()
+ret, frame2 = cap.read()
+
+print(frame1)
+
+y=len(frame1)
+frame1_up=frame1[0:y/2]
+frame1_down=frame1[y/2:y]
+frame2_up=frame2[0:y/2]
+frame2_down=frame2[y/2:y]
+
+cv2.imshow("2", frame1_up)
+
+while cap.isOpened():
+
+    y=len(frame1)
+    frame1_up=frame1[0:y/2]
+    frame1_down=frame1[y/2:y]
+    frame2_up=frame2[0:y/2]
+    frame2_down=frame2[y/2:y]
+
+    frame_up=find_contour_joueur(frame1_up,frame2_up)
+    frame_down=find_contour_joueur(frame1_down,frame2_down)
+
+    frame=np.concatenate((frame_up, frame_down))
+    cv2.imshow("feed", frame)
+
     frame1 = frame2
     ret, frame2 = cap.read()
     if cv2.waitKey(40) == 27:
