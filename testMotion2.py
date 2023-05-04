@@ -29,7 +29,7 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('rv_j1/cut3_kc1Br6Pp.mp4')
+cap = cv2.VideoCapture('video_input2.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
@@ -75,10 +75,12 @@ while cap.isOpened():
     #              print(cont(rec))
     #              tab_rec.remove(rec)
     # #retirer les gros
+    #retirer les petits
+    tab_rec = [rec for rec in tab_rec if ((not rec[2]<50))]
 
-    print("1: ",tab_rec)
-    tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
-    print("2: ",tab_rec)
+    #print("1: ",tab_rec)
+    #tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
+    #print("2: ",tab_rec)
 
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
