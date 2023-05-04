@@ -56,10 +56,10 @@ while cap.isOpened():
         up_low_base = y < 420
         rec_base = cv2.boundingRect(contour)
 
-        if cv2.contourArea(contour) < 600:
+        if cv2.contourArea(contour) < 100:
             continue
-        
-        for rec in tab_rec:
+        #loop copie
+        for rec in tab_rec[:]:
             up_low_rec = rec[1] < 420
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
                 #if(aire(englobant(rec_base,rec))<aire(joueurs[0])+aire(joueurs[1])):
@@ -75,12 +75,11 @@ while cap.isOpened():
     #              print(cont(rec))
     #              tab_rec.remove(rec)
     # #retirer les gros
-    for loop in range(len(tab_rec)-1):
-        rec=tab_rec[loop]
-        if rec[3]>0 or rec[2]>0:
-            #print(rec)
-            tab_rec.remove(rec)   
-    print(len(tab_rec))
+
+    print("1: ",tab_rec)
+    tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
+    print("2: ",tab_rec)
+
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
             joueurs[0]=tab_rec[0]
