@@ -45,8 +45,8 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('rv_j1/cut2.mp4')
-
+#cap = cv2.VideoCapture('rv_j1/cut6.mp4')
+cap = cv2.VideoCapture('open.mp4')
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
@@ -58,7 +58,7 @@ print("milieux = ",milieu_x)
 joueurs=[(milieu_x,milieu_y,100,200),(milieu_x,milieu_y,150,250)]
 while cap.isOpened():
 
-    devMode=True
+    devMode=False
 
     diff1 = cv2.absdiff(frame1, frame2)
     diff2 = cv2.absdiff(frame2, frame3)
@@ -157,7 +157,7 @@ while cap.isOpened():
     h=max(h1,120)
     cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
-    cv2.imshow("feed2", dilated)
+    if(devMode):cv2.imshow("feed2", dilated)
     #cv2.imshow("feed2", dilated)
     frame1 = frame2
     frame2=frame3
