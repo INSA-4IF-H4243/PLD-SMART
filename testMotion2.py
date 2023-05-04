@@ -83,8 +83,13 @@ while cap.isOpened():
             joueurs[0]=tab_rec[1]
             joueurs[1]=tab_rec[0]
 
-        joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,150,150)
-        joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,150,250)
+        w1=max(joueurs[1][2]+50,150)
+        h1=max(joueurs[1][3]+20,250)
+        w0=max(joueurs[0][2]+50,150)
+        h0=max(joueurs[0][3]+20,150)
+
+        joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,w0,h0)
+        joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
         #Jbas
         (x, y, w, h) = joueurs[0]
         cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
