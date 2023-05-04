@@ -1,7 +1,8 @@
 
 import cv2
 import numpy as np
-
+def aire(rec):
+    return rec[2]*rec[3]
 def superposition(rec1, rec2):
     dx = min(rec1[0]+rec1[2], rec2[0]+rec2[2]) - max(rec1[0], rec2[0])
     dy = min(rec1[1]+rec1[3], rec2[1]+rec2[3]) - max(rec1[1], rec2[1])
@@ -26,9 +27,15 @@ cap = cv2.VideoCapture('video_input2.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
-
+ret, frame3 = cap.read()
+#tableau avec joueur 0 (en bas) et joueur 1 (en haut)
+joueurs=[(0,0,0,0),(0,0,0,0)]
 while cap.isOpened():
-    diff = cv2.absdiff(frame1, frame2)
+    diff1 = cv2.absdiff(frame1, frame2)
+    diff2= cv2.absdiff(frame2, frame3)
+    diff= cv2.absdiff(diff1, diff2)
+
+
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
@@ -39,7 +46,7 @@ while cap.isOpened():
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
 
-        if cv2.contourArea(contour) < 600:
+        if cv2.contourArea(contour) < 120:
             continue
         
         for rec in tab_rec:
@@ -48,13 +55,32 @@ while cap.isOpened():
                 tab_rec.remove(rec)
         tab_rec.append(rec_base)
     print("nb contour = ",len(tab_rec))
+
+    #retirer les petits après superpositon
     for rec in tab_rec:
-        (x, y, w, h) = rec
-        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        #cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
+            if aire(rec)<600:
+                tab_rec.remove(rec)
+                                     
+    if(len(tab_rec)==2):
+        if((tab_rec[0])[1]<(tab_rec[1])[1]):
+            joueurs[0]=tab_rec[0]
+            joueurs[1]=tab_rec[1]
+        else:
+            joueurs[0]=tab_rec[1]
+            joueurs[1]=tab_rec[0]
+        for rec in tab_rec:
+            (x, y, w, h) = rec
+            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    else:
+        for rec in tab_rec:
+            (x, y, w, h) = rec
+            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            #cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     frame1 = frame2
-    ret, frame2 = cap.read()
+    frame2=frame3
+    ret, frame3 = cap.read()
+
     if cv2.waitKey(40) == 27:
         break
 
