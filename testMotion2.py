@@ -1,8 +1,12 @@
 
 import cv2
 import numpy as np
-def aire(rec):
-    return rec[2]*rec[3]
+import random
+
+def cont(rec):
+    contour=rec[2]*2+rec[3]*2
+    return contour
+
 def superposition(rec1, rec2):
     dx = min(rec1[0]+rec1[2], rec2[0]+rec2[2]) - max(rec1[0], rec2[0])
     dy = min(rec1[1]+rec1[3], rec2[1]+rec2[3]) - max(rec1[1], rec2[1])
@@ -45,21 +49,29 @@ while cap.isOpened():
     tab_rec = []
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
+        x = rec_base[0]
+        y = rec_base[1]
+        up_low_base = y < 420
 
-        if cv2.contourArea(contour) < 120:
+        if cv2.contourArea(contour) < 600:
             continue
         
+
         for rec in tab_rec:
-            if superposition(rec_base, rec):
+            up_low_rec = rec[1] < 420
+            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
                 rec_base = englobant(rec_base, rec)
                 tab_rec.remove(rec)
+
         tab_rec.append(rec_base)
     print("nb contour = ",len(tab_rec))
 
-    #retirer les petits après superpositon
-    for rec in tab_rec:
-            if aire(rec)<600:
-                tab_rec.remove(rec)
+    # #retirer les petits après superpositon
+    # for rec in tab_rec:
+    #          print(rec)
+    #          if cont(rec)<500:
+    #              print(cont(rec))
+    #              tab_rec.remove(rec)
                                      
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -74,7 +86,7 @@ while cap.isOpened():
     else:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv2.rectangle(frame1, (x, y), (x+w, y+h),(0,0,255) , 2)
             #cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     frame1 = frame2
