@@ -92,19 +92,6 @@ while cap.isOpened():
             joueurs[0]=tab_rec[1]
             joueurs[1]=tab_rec[0]
 
-        w1=max(joueurs[1][2]+50,150)
-        h1=max(joueurs[1][3]+20,250)
-        w0=max(joueurs[0][2]+50,150)
-        h0=max(joueurs[0][3]+20,150)
-
-        joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,w0,h0)
-        joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
-        #Jbas
-        (x, y, w, h) = joueurs[0]
-        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        #jhaut
-        (x, y, w, h) = joueurs[1]
-        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
     else:
         #cherche carré les plus proches des joueurs
         minJoueur0=(0,0,0,0)
@@ -115,11 +102,23 @@ while cap.isOpened():
             if distCarre(joueurs[1],rec)<distCarre(minJoueur1,joueurs[1]):
                 minJoueur1=rec   
 
-           
-        for rec in tab_rec:
-            (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h),(0,0,255) , 2)
-            #cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
+        joueurs[0] = minJoueur0
+        joueurs[1] = minJoueur1
+
+    #affichage des joueurs
+    w1=max(joueurs[1][2]+50,150)
+    h1=max(joueurs[1][3]+20,250)
+    w0=max(joueurs[0][2]+50,150)
+    h0=max(joueurs[0][3]+20,150)
+
+    joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,w0,h0)
+    joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
+    #Jbas
+    (x, y, w, h) = joueurs[0]
+    cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    #jhaut
+    (x, y, w, h) = joueurs[1]
+    cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     frame1 = frame2
     frame2=frame3
