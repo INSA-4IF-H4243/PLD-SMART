@@ -49,22 +49,16 @@ while cap.isOpened():
     tab_rec = []
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
-        x = rec_base[0]
-        y = rec_base[1]
-        up_low_base = y < 420
 
         if cv2.contourArea(contour) < 600:
             continue
         
-
         for rec in tab_rec:
-            up_low_rec = rec[1] < 420
-            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
+            if superposition(rec_base, rec):
                 rec_base = englobant(rec_base, rec)
                 tab_rec.remove(rec)
-
         tab_rec.append(rec_base)
-    print("nb contour = ",len(tab_rec))
+    #print("nb contour = ",len(tab_rec))
 
     # #retirer les petits après superpositon
     # for rec in tab_rec:
@@ -80,9 +74,13 @@ while cap.isOpened():
         else:
             joueurs[0]=tab_rec[1]
             joueurs[1]=tab_rec[0]
-        for rec in tab_rec:
-            (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+        #Jbas
+        (x, y, w, h) = tab_rec[0]
+        cv2.rectangle(frame1, (x-50, y-50), (x+150, y+250), (0, 255, 0), 2)
+        #jhaut
+        (x, y, w, h) = tab_rec[1]
+        cv2.rectangle(frame1, (x-50, y-50), (x+150, y+150), (0, 255, 0), 2)
     else:
         for rec in tab_rec:
             (x, y, w, h) = rec
