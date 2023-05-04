@@ -43,6 +43,11 @@ def englobant(rec1, rec2):
         return rec3
     return rec1
 
+def flouter(image):
+    imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(imgray, (5,5), 4)
+    ret,thresh = cv2.threshold(imgray,127,255,cv2.THRESH_BINARY)
+    return thresh
 
 #cap = cv2.VideoCapture(0)
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
@@ -83,8 +88,9 @@ while cap.isOpened():
         #loop copie
 
         #traitement des contours dont la forme est clairement differente d'un tennisman
-        if(cont(rec_base)<100 or cont(rec_base)>1000):continue
-        if(rec_base[2]/rec_base[3]>5 or rec_base[3]/rec_base[2]>5):continue
+        #cont(rec_base)<100 or
+        if( cont(rec_base)<100 or cont(rec_base)>1000):continue
+        if(rec_base[2]/rec_base[3]>3 or rec_base[3]/rec_base[2]>3):continue
         for rec in tab_rec[:]:         
             up_low_rec = rec[1] < milieu_y
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
@@ -115,28 +121,30 @@ while cap.isOpened():
 
     else:
         #cherche carré les plus proches des joueurs
-        minJoueur0=(10000000,10000000,10000000,10000000)
-        minJoueur1=(10000000,10000000,10000000,10000000)
+        minJoueur0=(0,0,0,0)
+        minJoueur1=(0,0,0,0)
         b0 = 0
         b1 = 0
         for rec in tab_rec:           
-            if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and centre(rec)[1]<milieu_y:
-                if devMode:print("joueur0")
-                if devMode:print(similarite(joueurs[0],rec))
-                minJoueur0=rec
-                b0 = 1
+            if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
+                #if distance2(joueurs[0],rec) < 5*5:
+                    if devMode:print("joueur0")
+                    if devMode:print(similarite(joueurs[0],rec))
+                    minJoueur0=rec
+                    b0 = 1
 #and similarite(joueurs[1],rec) < 2000 and rec[1]>420:
-            elif distance2(joueurs[1],rec) < distance2(minJoueur1,joueurs[1]) and centre(rec)[1]>milieu_y:
-                minJoueur1=rec  
-                b1 = 1 
+            elif distance2(joueurs[1],rec) < distance2(minJoueur1,joueurs[1]) and (centre(rec)[1]>milieu_y):
+                #if distance2(joueurs[1],rec) < 5*5:
+                    minJoueur1=rec  
+                    b1 = 1 
         if b0:
             joueurs[0] = minJoueur0
         if b1:
             joueurs[1] = minJoueur1
 
     #affichage des joueurs
-    decalageX = 0
-    decalageY = 0
+    decalageX = 15
+    decalageY = 20
 
     # w1=max(joueurs[1][2]+ decalageX + 20,150)
     # h1=max(joueurs[1][3]+ decalageY + 20,250)
@@ -150,6 +158,7 @@ while cap.isOpened():
     (x, y, w0, h0) = joueurs[0]
     w=max(w0,25)
     h=max(h0,40)
+    
     cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     #jbas
     (x, y, w1, h1) = joueurs[1]
@@ -161,6 +170,11 @@ while cap.isOpened():
     #cv2.imshow("feed2", dilated)
     frame1 = frame2
     frame2=frame3
+    cap.read()
+    cap.read()
+    cap.read()
+    cap.read()
+    cap.read()
     ret, frame3 = cap.read()
 
     if cv2.waitKey(40) == 27:
