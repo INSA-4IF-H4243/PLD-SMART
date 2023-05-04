@@ -4,6 +4,8 @@ import numpy as np
 import random
 def aire(rec):
     return rec[2]*rec[3]
+def distCarre(rec1,rec2):
+    return (rec1[1]-rec2[1])*(rec1[1]-rec2[1]) + (rec1[0]-rec2[0])*(rec1[0]-rec2[0])
 
 def cont(rec):
     contour=rec[2]*2+rec[3]*2
@@ -104,6 +106,16 @@ while cap.isOpened():
         (x, y, w, h) = joueurs[1]
         cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
     else:
+        #cherche carré les plus proches des joueurs
+        minJoueur0=(0,0,0,0)
+        minJoueur1=(0,0,0,0)
+        for rec in tab_rec:
+            if distCarre(joueurs[0],rec)<distCarre(minJoueur1,joueurs[0]):
+                minJoueur0=rec
+            if distCarre(joueurs[1],rec)<distCarre(minJoueur1,joueurs[1]):
+                minJoueur1=rec   
+
+           
         for rec in tab_rec:
             (x, y, w, h) = rec
             cv2.rectangle(frame1, (x, y), (x+w, y+h),(0,0,255) , 2)
