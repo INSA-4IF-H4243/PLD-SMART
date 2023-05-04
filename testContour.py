@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('rv_j1/cut2.mp4')
+cap = cv2.VideoCapture('rv_j1/cut6.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()

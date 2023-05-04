@@ -45,7 +45,7 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('rv_j1/cut3.mp4')
+cap = cv2.VideoCapture('rv_j1/cut2.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
@@ -79,9 +79,12 @@ while cap.isOpened():
         up_low_base = y < 420
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        if devMode:cv2.rectangle(dilated, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
         #loop copie
+
+        #traitement des contours dont la forme est clairement differente d'un tennisman
         if(cont(rec_base)<100 or cont(rec_base)>1000):continue
+        if(rec_base[2]/rec_base[3]>5 or rec_base[3]/rec_base[2]>5):continue
         for rec in tab_rec[:]:         
             up_low_rec = rec[1] < milieu_y
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
@@ -155,6 +158,7 @@ while cap.isOpened():
     cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     cv2.imshow("feed2", dilated)
+    #cv2.imshow("feed2", dilated)
     frame1 = frame2
     frame2=frame3
     ret, frame3 = cap.read()
