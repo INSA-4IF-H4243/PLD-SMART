@@ -3,18 +3,23 @@ import numpy as np
 import random
 def aire(rec):
     return rec[2]*rec[3]
+
+
 def similarite(rec1,rec2):
+    
     distance = (rec1[1]-rec2[1])*(rec1[1]-rec2[1]) + (rec1[0]-rec2[0])*(rec1[0]-rec2[0])
     differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
-    return distance + 0.07*differenceAire
+    return distance
+
 def cont(rec):
     contour=rec[2]*2+rec[3]*2
     return contour
 
 def superposition(rec1, rec2):
+    prox = -15
     dx = min(rec1[0]+rec1[2], rec2[0]+rec2[2]) - max(rec1[0], rec2[0])
     dy = min(rec1[1]+rec1[3], rec2[1]+rec2[3]) - max(rec1[1], rec2[1])
-    if (dx >= -10 and dy >= -10) : 
+    if (dx >= prox and dy >= prox) : 
         return True
     else :
         return False
@@ -26,18 +31,20 @@ def englobant(rec1, rec2):
     y2 = max(rec1[1]+rec1[3], rec2[1]+rec2[3])
     w = x2-x1
     h = y2-y1
-    rec3 = (x1,y1,w,h)
-    return rec3
+    if h < 300 and w < 200:
+        rec3 = (x1,y1,w,h)
+        return rec3
+    return rec1
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('rv_j1/cut4.mp4')
-#cap = cv2.VideoCapture('video_input2.mp4')
+cap = cv2.VideoCapture('test.mp4')
+
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
-joueurs=[(100000,100000,100000,100000),(100000,100000,100000,100000)]
+joueurs=[(700,250,100,200),(700,600,150,250)]
 while cap.isOpened():
     diff1 = cv2.absdiff(frame1, frame2)
     diff2 = cv2.absdiff(frame2, frame3)
@@ -49,47 +56,36 @@ while cap.isOpened():
     _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
     dilated = cv2.dilate(thresh, None, iterations=3)
     contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     tab_rec = []
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
         x = rec_base[0]
         y = rec_base[1]
         up_low_base = y < 420
-        
         (x, y, w, h) = rec_base
-        if(cont(rec_base)>1000):
-            continue
-        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        new_rec = rec_base
+        #cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
         #loop copie
         for rec in tab_rec[:]:         
             up_low_rec = rec[1] < 420
-
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
-                #if(aire(englobant(rec_base,rec))<aire(joueurs[0])+aire(joueurs[1])):
-                rec_base = englobant(rec_base, rec)
-                tab_rec.remove(rec)
-        tab_rec.append(rec_base)
+                new_rec = englobant(rec_base, rec)
+                if new_rec != rec_base:
+                    tab_rec.remove(rec)
+        tab_rec.append(new_rec)
     #print("nb contour = ",len(tab_rec))
-
-    # for rec in tab_rec:
-    #      (x, y, w, h) = rec
-    #      cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
-
     #retirer les petits
-    tab_rec = [rec for rec in tab_rec if ((not rec[2]<40) and not rec[3]<60)]
+    tab_rec = [rec for rec in tab_rec if ((not rec[2]<20) and not rec[3]<40)]
     #retirer les grands
-    tab_rec = [rec for rec in tab_rec if ((not rec[3]>500) and not rec[2]>300)]
+    tab_rec = [rec for rec in tab_rec if ((not rec[3]>350) and not rec[2]>200)]
     #print("1: ",tab_rec)
     #tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
     #print("2: ",tab_rec)
-    # for rec in tab_rec:
-    #     (x, y, w, h) = rec
-    #     cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
     for rec in tab_rec:
         (x, y, w, h) = rec
-        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+        #cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -101,39 +97,47 @@ while cap.isOpened():
 
     else:
         #cherche carré les plus proches des joueurs
-        minJoueur0=(100000,100000,100000,100000)
-        minJoueur1=(100000,100000,100000,100000)
-        found0=False
-        found1=False
+        minJoueur0=(10000000,10000000,10000000,10000000)
+        minJoueur1=(10000000,10000000,10000000,10000000)
+        b0 = 0
+        b1 = 0
         for rec in tab_rec:           
-            if similarite(joueurs[0],rec)<similarite(minJoueur1,joueurs[0]) and similarite(joueurs[0],rec) < 200000 and rec[1]<420:
-                print('joueur0')
+            if similarite(joueurs[0],rec) < similarite(joueurs[0],minJoueur0) and similarite(joueurs[0],rec) < 2000 and rec[1]<420:
+                print("joueur0")
                 print(similarite(joueurs[0],rec))
                 minJoueur0=rec
-                found0=True
-            elif similarite(joueurs[1],rec)<similarite(minJoueur1,joueurs[1]) and similarite(joueurs[1],rec) < 200000 and rec[1]>420:
-                print('joueur1')
-                print(similarite(joueurs[1],rec))
-                minJoueur1=rec  
-                found1=True 
-        if(found1):        joueurs[1] = minJoueur1
-        if(found0):         joueurs[0] = minJoueur0
+                b0 = 1
 
+            elif similarite(joueurs[1],rec) < similarite(minJoueur1,joueurs[1]) and similarite(joueurs[1],rec) < 2000 and rec[1]>420:
+                minJoueur1=rec  
+                b1 = 1 
+        if b0:
+            joueurs[0] = minJoueur0
+        if b1:
+            joueurs[1] = minJoueur1
 
     #affichage des joueurs
-    # w1=max(joueurs[1][2]+70,150)
-    # h1=max(joueurs[1][3]+40,250)
-    # w0=max(joueurs[0][2]+70,150)
-    # h0=max(joueurs[0][3]+40,150)
+    decalageX = 15
+    decalageY = 20
+
+    # w1=max(joueurs[1][2]+ decalageX + 20,150)
+    # h1=max(joueurs[1][3]+ decalageY + 20,250)
+    # w0=max(joueurs[0][2]+ decalageX + 20,150)
+    # h0=max(joueurs[0][3]+ decalageY + 20,150)
 
     # joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,w0,h0)
     # joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
-    #Jbas
-    (x, y, w, h) = joueurs[0]
-    cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
-    #jhaut
-    (x, y, w, h) = joueurs[1]
-    cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+    #Jhaut
+    (x, y, w0, h0) = joueurs[0]
+    w=max(w0,25)
+    h=max(h0,40)
+    cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
+    #jbas
+    (x, y, w1, h1) = joueurs[1]
+    w=max(w1,75)
+    h=max(h1,120)
+    cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     frame1 = frame2
     frame2=frame3
