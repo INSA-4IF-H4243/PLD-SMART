@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 import random
+def aire(rec):
+    return rec[2]*rec[3]
 
 def cont(rec):
     contour=rec[2]*2+rec[3]*2
@@ -10,7 +12,7 @@ def cont(rec):
 def superposition(rec1, rec2):
     dx = min(rec1[0]+rec1[2], rec2[0]+rec2[2]) - max(rec1[0], rec2[0])
     dy = min(rec1[1]+rec1[3], rec2[1]+rec2[3]) - max(rec1[1], rec2[1])
-    if (dx >= -60 and dy >= -60 and englobant) : 
+    if (dx >= -60 and dy >= -60) : 
         return True
     else :
         return False
@@ -49,12 +51,18 @@ while cap.isOpened():
     tab_rec = []
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
+        x = rec_base[0]
+        y = rec_base[1]
+        up_low_base = y < 420
+        rec_base = cv2.boundingRect(contour)
 
         if cv2.contourArea(contour) < 600:
             continue
         
         for rec in tab_rec:
-            if superposition(rec_base, rec):
+            up_low_rec = rec[1] < 420
+            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
+                #if(aire(englobant(rec_base,rec))<aire(joueurs[0])+aire(joueurs[1])):
                 rec_base = englobant(rec_base, rec)
                 tab_rec.remove(rec)
         tab_rec.append(rec_base)
@@ -75,12 +83,14 @@ while cap.isOpened():
             joueurs[0]=tab_rec[1]
             joueurs[1]=tab_rec[0]
 
+        joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,150,150)
+        joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,150,250)
         #Jbas
-        (x, y, w, h) = tab_rec[0]
-        cv2.rectangle(frame1, (x-50, y-50), (x+150, y+250), (0, 255, 0), 2)
+        (x, y, w, h) = joueurs[0]
+        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
         #jhaut
-        (x, y, w, h) = tab_rec[1]
-        cv2.rectangle(frame1, (x-50, y-50), (x+150, y+150), (0, 255, 0), 2)
+        (x, y, w, h) = joueurs[1]
+        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 0), 2)
     else:
         for rec in tab_rec:
             (x, y, w, h) = rec
