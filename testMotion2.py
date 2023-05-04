@@ -29,7 +29,7 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('video_input2.mp4')
+cap = cv2.VideoCapture('rv_j1/cut3_kc1Br6Pp.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
@@ -74,7 +74,13 @@ while cap.isOpened():
     #          if cont(rec)<500:
     #              print(cont(rec))
     #              tab_rec.remove(rec)
-                                     
+    # #retirer les gros
+    for loop in range(len(tab_rec)-1):
+        rec=tab_rec[loop]
+        if rec[3]>0 or rec[2]>0:
+            #print(rec)
+            tab_rec.remove(rec)   
+    print(len(tab_rec))
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
             joueurs[0]=tab_rec[0]
