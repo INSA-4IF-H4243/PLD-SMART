@@ -4,10 +4,13 @@ import random
 def aire(rec):
     return rec[2]*rec[3]
 
+def centre(rec):
+    #centre = (x,y)
+    centre=(rec[0]+rec[2]/2,rec[1]+rec[3]/2)
+    return centre
 
 def similarite(rec1,rec2):
-    
-    distance = (rec1[1]-rec2[1])*(rec1[1]-rec2[1]) + (rec1[0]-rec2[0])*(rec1[0]-rec2[0])
+    distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
     differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
     return distance
 
@@ -38,7 +41,7 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('test.mp4')
+cap = cv2.VideoCapture('open.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
@@ -46,6 +49,9 @@ ret, frame3 = cap.read()
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
 joueurs=[(700,250,100,200),(700,600,150,250)]
 while cap.isOpened():
+
+    devMode=True
+
     diff1 = cv2.absdiff(frame1, frame2)
     diff2 = cv2.absdiff(frame2, frame3)
     diff= cv2.absdiff(diff1, diff2)
@@ -65,7 +71,7 @@ while cap.isOpened():
         up_low_base = y < 420
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        #cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
         #loop copie
         for rec in tab_rec[:]:         
             up_low_rec = rec[1] < 420
@@ -85,7 +91,7 @@ while cap.isOpened():
 
     for rec in tab_rec:
         (x, y, w, h) = rec
-        #cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
