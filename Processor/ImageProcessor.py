@@ -1,7 +1,5 @@
 from rembg import remove, new_session
-from ..video.Image import Image
 from skimage.restoration import estimate_sigma
-import os
 import cv2
 
 def estimate_noise(img):
@@ -23,22 +21,31 @@ class ImageProcessor:
     def __init__(self):
         pass
 
-    def remove_background(self, path_input_img: str, threshold = 0.3):
-        if not os.path.exists(path_input_img):
-            raise FileNotFoundError("The file {} does not exist".format(path_input_img))
-        input_obj = Image.load_image(path_input_img)
-        input_img = input_obj.img
-        model_name = "u2netp" if (estimate_noise(input_img) < threshold) else "u2net_human_seg"
+    def remove_background(self, input_img, threshold = 0.3):
+        """
+        Parameters
+        ----------
+        input_img : np.ndarray 3-dim
+            Input image
+        threshold : float, optional
+            Threshold to determine which model to use, by default 0.3
+
+        Returns
+        -------
+        np.ndarray 3-dim
+            Image with background removed
+        """
+        model_name = "u2net_human_seg" if (estimate_noise(input_img) < threshold) else "u2netp"
         session = new_session(model_name=model_name)
         output = remove(input_img, session=session, post_process_mask=True)
         return output
     
-    def crop_image(self, path_img: str, start_x: int, end_x: int, start_y: int, end_y: int):
+    def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):
         """
         Parameters
         ----------
-        path_img : str
-            Path to the image
+        img : np.ndarray 3-dim
+            Input image
         start_x : int
             Starting x coordinate
         end_x : int
@@ -53,10 +60,7 @@ class ImageProcessor:
         Image : np.ndarray 3-dim
             Cropped image
         """
-        if not os.path.exists(path_img):
-            raise FileNotFoundError("The file {} does not exist".format(path_img))
-        image = Image.load_image(path_img)
-        return image.img[start_y:end_y, start_x:end_x]
+        return img[start_y:end_y, start_x:end_x]
     
     def save_img(self, img, path: str):
         """
