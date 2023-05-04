@@ -37,14 +37,14 @@ ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
-joueurs=[(0,0,0,0),(0,0,0,0)]
+joueurs=[(300,420,0,0),(300,420,0,0)]
 while cap.isOpened():
     diff1 = cv2.absdiff(frame1, frame2)
     diff2= cv2.absdiff(frame2, frame3)
     diff= cv2.absdiff(diff1, diff2)
 
-
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    #flow=cv2.calcOpticalFlowFarneback(gray, gray, None)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
     dilated = cv2.dilate(thresh, None, iterations=3)
@@ -57,11 +57,14 @@ while cap.isOpened():
         y = rec_base[1]
         up_low_base = y < 420
         rec_base = cv2.boundingRect(contour)
-
+        (x, y, w, h) = rec_base
+        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
         if cv2.contourArea(contour) < 100:
             continue
         #loop copie
         for rec in tab_rec[:]:
+            
+            
             up_low_rec = rec[1] < 420
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
                 #if(aire(englobant(rec_base,rec))<aire(joueurs[0])+aire(joueurs[1])):
@@ -70,19 +73,17 @@ while cap.isOpened():
         tab_rec.append(rec_base)
     #print("nb contour = ",len(tab_rec))
 
-    # #retirer les petits après superpositon
-    # for rec in tab_rec:
-    #          print(rec)
-    #          if cont(rec)<500:
-    #              print(cont(rec))
-    #              tab_rec.remove(rec)
-    # #retirer les gros
     #retirer les petits
-    tab_rec = [rec for rec in tab_rec if ((not rec[2]<50))]
-
+    tab_rec = [rec for rec in tab_rec if ((not rec[2]<0))]
+    #retirer les grands
+    tab_rec = [rec for rec in tab_rec if ((not rec[3]>500) and not rec[2]>300)]
     #print("1: ",tab_rec)
     #tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
     #print("2: ",tab_rec)
+    for rec in tab_rec:
+        (x, y, w, h) = rec
+        cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+
 
     if(len(tab_rec)==2):
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -97,9 +98,9 @@ while cap.isOpened():
         minJoueur0=(0,0,0,0)
         minJoueur1=(0,0,0,0)
         for rec in tab_rec:
-            if distCarre(joueurs[0],rec)<distCarre(minJoueur1,joueurs[0]):
+            if distCarre(joueurs[0],rec)<distCarre(minJoueur1,joueurs[0]) and rec[1]<420:
                 minJoueur0=rec
-            if distCarre(joueurs[1],rec)<distCarre(minJoueur1,joueurs[1]):
+            if distCarre(joueurs[1],rec)<distCarre(minJoueur1,joueurs[1]) and rec[1]>420:
                 minJoueur1=rec   
 
         joueurs[0] = minJoueur0
