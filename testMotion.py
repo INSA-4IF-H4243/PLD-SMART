@@ -48,39 +48,38 @@ def find_contour_joueur(frame1, frame2):
     return(frame1)
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('v.mp4')
+cap = cv2.VideoCapture('rv_j1/cut3_48ePxIBI.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 
 print(frame1)
 
-y=len(frame1)
-frame1_up=frame1[0:y/2]
-frame1_down=frame1[y/2:y]
-frame2_up=frame2[0:y/2]
-frame2_down=frame2[y/2:y]
+y=len(frame1
+frame1_up=frame1[0:int(y/2)]
+frame1_down=frame1[int(y/2):]
+frame2_up=frame2[0:int(y/2)]
+frame2_down=frame2[int(y/2):y]
 
 cv2.imshow("2", frame1_up)
+cv2.waitKey(0)
+# while cap.isOpened():
 
-while cap.isOpened():
+#     y=len(frame1)
+#     frame1_up=frame1[0:y/2]
+#     frame1_down=frame1[y/2:y]
+#     frame2_up=frame2[0:y/2]
+#     frame2_down=frame2[y/2:y]
 
-    y=len(frame1)
-    frame1_up=frame1[0:y/2]
-    frame1_down=frame1[y/2:y]
-    frame2_up=frame2[0:y/2]
-    frame2_down=frame2[y/2:y]
+#     frame_up=find_contour_joueur(frame1_up,frame2_up)
+#     frame_down=find_contour_joueur(frame1_down,frame2_down)
 
-    frame_up=find_contour_joueur(frame1_up,frame2_up)
-    frame_down=find_contour_joueur(frame1_down,frame2_down)
+#     frame=np.concatenate((frame_up, frame_down))
+#     cv2.imshow("feed", frame)
 
-    frame=np.concatenate((frame_up, frame_down))
-    cv2.imshow("feed", frame)
-
-    frame1 = frame2
-    ret, frame2 = cap.read()
-    if cv2.waitKey(40) == 27:
-        break
-
+#     frame1 = frame2
+#     ret, frame2 = cap.read()
+#     if cv2.waitKey(40) == 27:
+#         break
 cv2.destroyAllWindows()
-cap.release()
+# cap.release()
