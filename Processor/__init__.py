@@ -1,3 +1,2 @@
-from .VideoProcessor import VideoProcessor
-from .ImageProcessor import ImageProcessor
-from .ImageProcessor import estimate_noise
+from .VideoProcessor import VideoProcessor, process_ffmpeg
+from .ImageProcessor import ImageProcessor, estimate_noise
