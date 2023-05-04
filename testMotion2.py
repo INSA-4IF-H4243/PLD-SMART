@@ -14,6 +14,10 @@ def similarite(rec1,rec2):
     differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
     return distance
 
+def distance2(rec1,rec2):
+    distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
+    return distance
+
 def cont(rec):
     contour=rec[2]*2+rec[3]*2
     return contour
@@ -41,13 +45,17 @@ def englobant(rec1, rec2):
 
 
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('open.mp4')
+cap = cv2.VideoCapture('rv_j1/cut3.mp4')
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
+milieu_y=len(frame1)/2
+milieu_x=len(frame1[0])/2
+print("milieuy = ",milieu_y)
+print("milieux = ",milieu_x)
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
-joueurs=[(700,250,100,200),(700,600,150,250)]
+joueurs=[(milieu_x,milieu_y,100,200),(milieu_x,milieu_y,150,250)]
 while cap.isOpened():
 
     devMode=True
@@ -59,10 +67,10 @@ while cap.isOpened():
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     #flow=cv2.calcOpticalFlowFarneback(gray, gray, None)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
-    _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(blur, 40, 255, cv2.THRESH_OTSU)
     dilated = cv2.dilate(thresh, None, iterations=3)
     contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    
     tab_rec = []
     for contour in contours:
         rec_base = cv2.boundingRect(contour)
@@ -71,10 +79,11 @@ while cap.isOpened():
         up_low_base = y < 420
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        if devMode:cv2.rectangle(dilated, (x, y), (x+w, y+h), (0, 255, 255), 2)
         #loop copie
+        if(cont(rec_base)<100 or cont(rec_base)>1000):continue
         for rec in tab_rec[:]:         
-            up_low_rec = rec[1] < 420
+            up_low_rec = rec[1] < milieu_y
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
                 new_rec = englobant(rec_base, rec)
                 if new_rec != rec_base:
@@ -82,9 +91,9 @@ while cap.isOpened():
         tab_rec.append(new_rec)
     #print("nb contour = ",len(tab_rec))
     #retirer les petits
-    tab_rec = [rec for rec in tab_rec if ((not rec[2]<20) and not rec[3]<40)]
+    #tab_rec = [rec for rec in tab_rec if ((not rec[2]<20) and not rec[3]<40)]
     #retirer les grands
-    tab_rec = [rec for rec in tab_rec if ((not rec[3]>350) and not rec[2]>200)]
+    #tab_rec = [rec for rec in tab_rec if ((not rec[3]>350) and not rec[2]>200)]
     #print("1: ",tab_rec)
     #tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
     #print("2: ",tab_rec)
@@ -108,13 +117,13 @@ while cap.isOpened():
         b0 = 0
         b1 = 0
         for rec in tab_rec:           
-            if similarite(joueurs[0],rec) < similarite(joueurs[0],minJoueur0) and similarite(joueurs[0],rec) < 2000 and rec[1]<420:
-                print("joueur0")
-                print(similarite(joueurs[0],rec))
+            if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and centre(rec)[1]<milieu_y:
+                if devMode:print("joueur0")
+                if devMode:print(similarite(joueurs[0],rec))
                 minJoueur0=rec
                 b0 = 1
-
-            elif similarite(joueurs[1],rec) < similarite(minJoueur1,joueurs[1]) and similarite(joueurs[1],rec) < 2000 and rec[1]>420:
+#and similarite(joueurs[1],rec) < 2000 and rec[1]>420:
+            elif distance2(joueurs[1],rec) < distance2(minJoueur1,joueurs[1]) and centre(rec)[1]>milieu_y:
                 minJoueur1=rec  
                 b1 = 1 
         if b0:
@@ -123,8 +132,8 @@ while cap.isOpened():
             joueurs[1] = minJoueur1
 
     #affichage des joueurs
-    decalageX = 15
-    decalageY = 20
+    decalageX = 0
+    decalageY = 0
 
     # w1=max(joueurs[1][2]+ decalageX + 20,150)
     # h1=max(joueurs[1][3]+ decalageY + 20,250)
@@ -145,6 +154,7 @@ while cap.isOpened():
     h=max(h1,120)
     cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
+    cv2.imshow("feed2", dilated)
     frame1 = frame2
     frame2=frame3
     ret, frame3 = cap.read()
