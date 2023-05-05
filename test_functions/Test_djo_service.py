@@ -13,10 +13,11 @@ output_path = os.path.join(project_path, 'img', 'djo_service_cropped')
 video = Video.read_video(video_path)
 frames = video.frames
 cropped_frames = []
-#image_processor.save_img(frames[0], os.path.join(output_path, "frame0.jpg"))
+#image_processor.save_img(frames[0], os.path.join(output_path, "frame0.png"))
 cropped_frames_rembg = []
 for frame in frames:
-    cropped_frames.append(image_processor.crop_image(frame, 590, 645, 64, 171))
+    f = image_processor.normalize_img(frame)
+    cropped_frames.append(image_processor.crop_image(f, 590, 645, 64, 171))
 for i in range(len(cropped_frames)):
     output = os.path.join(output_path, "frame{}.png".format(i))
-    image_processor.save_img(image_processor.remove_background(cropped_frames[i]), output)
+    image_processor.save_img(image_processor.remove_background_2(cropped_frames[i]), output)
