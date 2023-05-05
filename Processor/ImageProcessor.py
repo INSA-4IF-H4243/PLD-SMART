@@ -1,6 +1,10 @@
 from rembg import remove, new_session
 from skimage.restoration import estimate_sigma
 import cv2
+import PIL
+import numpy as np
+from ..video.Video import Video
+import os
 
 def estimate_noise(img):
     """
@@ -21,7 +25,7 @@ class ImageProcessor:
     def __init__(self):
         pass
 
-    def remove_background(self, input_img, threshold = 0.3):
+    def remove_background(self, input_img, threshold = 0.3, mode_img = "RGB"):
         """
         Parameters
         ----------
@@ -38,7 +42,9 @@ class ImageProcessor:
         model_name = "u2net_human_seg" if (estimate_noise(input_img) < threshold) else "u2netp"
         session = new_session(model_name=model_name)
         output = remove(input_img, session=session, post_process_mask=True)
-        return output
+        img_output = PIL.Image.fromarray(output)
+        img_output = img_output.convert(mode_img)
+        return np.array(img_output)
     
     def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):
         """
@@ -72,6 +78,47 @@ class ImageProcessor:
             Path to save the image
         """
         cv2.imwrite(path, img)
+        return
+    
+    def crop_shadow_player_save(self, video: Video, nb_start: int, nb_end: int,
+                                start_x: int, end_x: int,
+                                start_y: int, end_y: int,
+                                folder_path: str, threshold: float = 1.1,
+                                mode_img: str = "RGB"):
+        """
+        Crop the shadow player from the video and save the cropped images to a folder
+        
+        Parameters
+        ----------
+        video: Video
+            The video to crop
+        nb_start: int
+            The number of the first frame to be cropped
+        nb_end: int
+            The number of the last frame to be cropped
+        start_x: int
+            The starting x coordinate of the cropped image
+        end_x: int
+            The ending x coordinate of the cropped image
+        start_y: int
+            The starting y coordinate of the cropped image
+        end_y: int
+            The ending y coordinate of the cropped image
+        folder_path: str
+            The path to the folder where the shadow images will be saved
+        threshold: float
+            The threshold to remove the background
+        """
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        list_frames = video.frames[nb_start:nb_end]
+        for i in range(nb_start, nb_end):
+            crop_img = self.crop_image(list_frames[i], start_x, end_x, start_y, end_y)
+            gray_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
+            no_bg_img = self.remove_background(gray_img, threshold, mode_img)
+            _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+            saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
+            cv2.imwrite(saved_path, thresh)
         return
     
 '''
