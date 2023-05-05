@@ -64,7 +64,7 @@ class ImageProcessor:
         finalimage = background + foreground
 
         return finalimage
-
+        
     def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):
         """
         Parameters
@@ -86,7 +86,51 @@ class ImageProcessor:
             Cropped image
         """
         return img[start_y:end_y, start_x:end_x]
+    
+    def crop_silouhette(self, img, pixelSize):
+        """
+        Parameters
+        ----------
+        img : np.ndarray 3-dim
+            Input image
+        """
+       
+        miny=len(img)
+        maxy=0
+        minx=len(img[0])
+        maxx=0
+        
+        for i in range(len(img)):
+            for j in range(len(img[0])):
+                if(img[i][j]!=0):
+                    if(i>maxy):maxy=i
+                    if(i<miny):miny=i
 
+                    if(j>maxx):maxx=j
+                    if(j<minx):minx=j
+
+        if(miny<maxy and maxx>minx):
+            img2=self.crop_image(img,minx, maxx,miny,maxy)
+            img3=cv2.resize(img2,(pixelSize,pixelSize))
+            img=img3
+        return img
+    
+    def flouter_image(self,image):
+
+        imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(imgray, (5,5), 4)
+        ret,thresh = cv2.threshold(imgray,127,255,cv2.THRESH_BINARY)
+        return thresh
+
+    def binary(self,image):
+        new_img=image
+        for i in range(len(new_img)):
+            for j in range(len(new_img[0])):
+                if(new_img[i][j]!=0):
+                    new_img[i][j]=255
+        
+        return new_img
+        
     def save_img(self, img, path: str):
         """
         Parameters
