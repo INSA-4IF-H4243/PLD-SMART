@@ -247,16 +247,24 @@ while cap.isOpened() and ret3:
 # save numpy array as npy file
 from numpy import save
 
-
-pathJhaut=outPutPathJHaut+str(nbFrame)+'.npy'
-pathJbas=outPutPathJBas+str(nbFrame)+'.npy'
-
-
+count=0
 for i in tableauSortieJHaut:
+    count+=1
+    pathJhaut='./'+outPutPathJHaut+str(count)+'.npy'
+
     i=np.asmatrix(i)
     i=i.astype(int)
-    print("\n\n,",i)
-    np.savetxt("test.csv", i, delimiter=" ")
+    print(pathJhaut)
+    np.savetxt('test.csv',i,fmt='%d',  delimiter=" ")
+
+count=0
+for i in tableauSortieJBas:
+    count+=1
+    pathJbas=outPutPathJBas+str(count)+'.npy'
+
+    i=np.asmatrix(i)
+    i=i.astype(int)
+    np.savetxt(pathJbas, i, delimiter=" ")
 
 # save to npy file
 # with open('test.csv', 'wb') as f:
