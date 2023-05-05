@@ -10,10 +10,18 @@ ffmpeg.__path__
 from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
 from smart.video import Video, Image
 
+########################PARAMETRES :
+
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
-PixelSizeOutput=20
-videoPath='video_input/video_input5.mp4'
-videoResize=(600,300)
+PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
+videoPath='video_input/test.mp4'#chemin de la video
+outPutPathJ1='img/video_input5/j1'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJ2='img/video_input5/j2'#chemin d'enregistrement de la silouhette du Joueur 2
+fpsOutput=20#FPS de la sortie
+videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+
+#taille de lentree du machine learning = fpsOutput * PixelSizeOutput * PixelSizeOutput (20*20*20=8000 pixels noir ou blanc)
+
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -65,6 +73,10 @@ def englobant(rec1, rec2):
 #####LECTURE
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
 cap = cv2.VideoCapture(videoPath)
+fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
+rapportFps=fps/fpsOutput
+
+print(f"{fps} frames per second")
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
@@ -79,6 +91,7 @@ print(milieu_y)
 joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
+nbFrame=0
 while cap.isOpened():
 
     ###AJUSTEMENT TAILLE
@@ -188,11 +201,13 @@ while cap.isOpened():
     silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
 
     ###AFFICHAGE et ENREGISTREMENT
-    cv2.imshow("feed", frame1)
-    if(devMode):cv2.imshow("feed2", dilated)
+    if(nbFrame%rapportFps==0):
 
-    cv2.imshow("JoueurHaut", silouhette_haut)
-    cv2.imshow("JoueurBas", silouhette_bas)
+        cv2.imshow("feed", frame1)
+        if(devMode):cv2.imshow("feed2", dilated)
+
+        cv2.imshow("JoueurHaut", silouhette_haut)
+        cv2.imshow("JoueurBas", silouhette_bas)
 
     #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
     #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
@@ -205,14 +220,16 @@ while cap.isOpened():
 
     #cv2.imwrite(saved_path, thresh)
 
+    ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
-    frame2=frame3
+    frame2 = frame3
     # cap.read()
     # cap.read()
     # cap.read()
     # cap.read()
     # cap.read()
     ret, frame3 = cap.read()
+    nbFrame+=1
 
     if cv2.waitKey(40) == 27:
         break
