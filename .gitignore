@@ -1,5 +1,12 @@
-img/
 read_img.py
+test_ffmpeg.py
+
 build/
 smart.egg-info/
 Video/__pycache__/
+Processor/__pycache__/
+img/
+image_input/
+
+# PyCharm #
+.idea/
