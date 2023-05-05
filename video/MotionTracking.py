@@ -16,17 +16,16 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=False#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='video_input/test.mp4'#chemin de la video
+videoPath='video_input/video_input2.mp4'#chemin de la video
 outPutPathJHaut='img/test/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/test/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning = fpsOutput * PixelSizeOutput * PixelSizeOutput (20*20*20=8000 pixels noir ou blanc)
-tableauSortieJHaut=np.array()
-tableauSortieJBas=np.array()
-np.append(tableauSortieJHaut,np.empty([PixelSizeOutput, PixelSizeOutput]))
-np.append(tableauSortieJBas,np.empty([PixelSizeOutput, PixelSizeOutput]))
+tableauSortieJHaut=np.array(np.empty([PixelSizeOutput, PixelSizeOutput]))
+tableauSortieJBas=np.array(np.empty([PixelSizeOutput, PixelSizeOutput]))
+print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -84,7 +83,7 @@ rapportFps=fps/fpsOutput
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
-ret, frame3 = cap.read()
+ret3, frame3 = cap.read()
 
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame1,videoResize)
@@ -96,7 +95,7 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened():
+while cap.isOpened() and ret3:
 
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
@@ -212,9 +211,11 @@ while cap.isOpened():
 
         crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
         silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
+        _, thresh_haut = cv2.threshold(silouhette_haut, 127, 255, cv2.THRESH_BINARY)
 
         crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
         silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
+        _, thresh_bas = cv2.threshold(silouhette_bas, 127, 255, cv2.THRESH_BINARY)
 
         ###AFFICHAGE 
         if(affichage):
@@ -222,12 +223,12 @@ while cap.isOpened():
             cv2.imshow("feed", frame1)
             if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("JoueurHaut", silouhette_haut)
-            cv2.imshow("JoueurBas", silouhette_bas)
+            cv2.imshow("JoueurHaut", thresh_haut)
+            cv2.imshow("JoueurBas", thresh_bas)
 
         ###ENREGISTREMENT dans le TABLEAU
-        np.append(tableauSortieJHaut, silouhette_haut)
-        np.append(tableauSortieJBas, silouhette_bas)
+        np.append(tableauSortieJHaut, thresh_haut)
+        np.append(tableauSortieJBas, thresh_bas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -237,7 +238,7 @@ while cap.isOpened():
     # cap.read()
     # cap.read()
     # cap.read()
-    ret, frame3 = cap.read()
+    ret3, frame3 = cap.read()
     nbFrame+=1
 
     if cv2.waitKey(40) == 27:
@@ -248,6 +249,8 @@ while cap.isOpened():
 # pathJbas=outPutPathJBas+str(nbFrame)+'.bmp'
 # cv2.imwrite(pathJhaut, silouhette_haut)
 # cv2.imwrite(pathJbas, silouhette_bas)
+
+print(tableauSortieJHaut)
 
 cv2.destroyAllWindows()
 cap.release()

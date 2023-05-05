@@ -103,7 +103,7 @@ class ImageProcessor:
         
         for i in range(len(img)):
             for j in range(len(img[0])):
-                if(img[i][j]==255):
+                if(img[i][j]!=0):
                     if(i>maxy):maxy=i
                     if(i<miny):miny=i
 
