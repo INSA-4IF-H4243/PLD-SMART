@@ -14,7 +14,7 @@ from smart.video import Video, Image
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
-enregistrementImage=False#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
+enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
 videoPath='video_input/video_input3.mp4'#chemin de la video
 outPutPathJHaut='img/test/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
@@ -244,39 +244,37 @@ while cap.isOpened() and ret3:
         break
 
 ###ENREGISTREMENT DATA:
-# save numpy array as npy file
+
 from numpy import save
+import os
 
 count=0
-for i in tableauSortieJHaut:
-    count+=1
-    pathJhaut='./'+outPutPathJHaut+str(count)+'.npy'
 
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    print(pathJhaut)
-    np.savetxt('test.csv',i,fmt='%d',  delimiter=" ")
-
-count=0
+if not os.path.exists(outPutPathJBas):
+            os.makedirs(outPutPathJBas)
 for i in tableauSortieJBas:
     count+=1
-    pathJbas=outPutPathJBas+str(count)+'.npy'
-
+    saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
     i=np.asmatrix(i)
     i=i.astype(int)
-    np.savetxt(pathJbas, i, delimiter=" ")
+    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
+    if(enregistrementImage):
+         saved_pathIm = os.path.join(outPutPathJBas, 'frame_{}.jpg'.format(count))
+         cv2.imwrite(saved_pathIm, i*255)
 
-# save to npy file
-# with open('test.csv', 'wb') as f:
-#     save(f, tableauSortieJHaut)
-#     save(f, tableauSortieJBas)
+count=0
 
-
-# print("JHAUT",tableauSortieJHaut)
-# print("JBAS",tableauSortieJBas)
-
-# cv2.imwrite(pathJhaut, silouhette_haut)
-# cv2.imwrite(pathJbas, silouhette_bas)
+if not os.path.exists(outPutPathJHaut):
+            os.makedirs(outPutPathJHaut)
+for i in tableauSortieJHaut:
+    count+=1
+    saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
+    i=np.asmatrix(i)
+    i=i.astype(int)
+    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
+    if(enregistrementImage):
+         saved_pathIm = os.path.join(outPutPathJHaut, 'frame_{}.jpg'.format(count))
+         cv2.imwrite(saved_pathIm, i*255)
 
 cv2.destroyAllWindows()
 cap.release()
