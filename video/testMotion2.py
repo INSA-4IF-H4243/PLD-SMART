@@ -168,14 +168,14 @@ while cap.isOpened():
     #w=max(w0,25)
     #h=max(h0,40)
     
-    affichageJHaut=(x-decalageX, y-decalageY, w+decalageX, h+decalageY)
-    cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
+    affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
+    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 255, 0), 2)
     #jbas
     (x1, y1, w1, h1) = joueurs[1]
     #w=max(w1,75)
     #h=max(h1,120)
     affichageJBas=(x1-decalageX, y1-decalageY, w1+decalageX, h1+decalageY)
-    cv2.rectangle(frame1, (x1-decalageX, y1-decalageY), (x1+w1+decalageX, y1+h1+decalageY), (0, 255, 0), 2)
+    cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     if(devMode):cv2.imshow("feed2", frame1)
     #cv2.imshow("feed2", dilated)
