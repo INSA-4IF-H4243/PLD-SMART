@@ -14,7 +14,7 @@ setup(name='smart',
     packages=['smart.video', 'smart.processor'],
     package_dir={'smart.video': './video',
                  'smart.processor': './processor'},
-    install_requires=['tensorflow', 'numpy', 'scipy',
-                      'matplotlib', 'opencv-python', 'rembg',
+    install_requires=['numpy', 'scipy',
+                      'matplotlib', 'opencv-python',
                       'ffmpeg-python']
     )
