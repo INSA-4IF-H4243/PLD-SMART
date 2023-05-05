@@ -75,22 +75,23 @@ class ImageProcessor:
         img : np.ndarray 3-dim
             Input image
         """
+       
         miny=len(img)
         maxy=0
         minx=len(img[0])
         maxx=0
         
-        vide=True
         for i in range(len(img)):
             for j in range(len(img[0])):
                 if(img[i][j]==255):
-                    vide=False
                     if(i>maxy):maxy=i
                     if(i<miny):miny=i
 
                     if(j>maxx):maxx=j
                     if(j<minx):minx=j
-        if(not vide):
+        #print(minx, maxx,miny,maxy)
+
+        if(miny<maxy and maxx>minx):
             img2=self.crop_image(img,minx, maxx,miny,maxy)
             img3=cv2.resize(img2,(20,20))
             return img3
