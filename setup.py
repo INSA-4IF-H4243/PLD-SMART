@@ -16,5 +16,5 @@ setup(name='smart',
                    'smart.processor': './processor'},
       install_requires=['tensorflow', 'numpy', 'scipy',
                         'matplotlib', 'opencv-python', 'rembg',
-                        'ffmpeg-python', 'scikit-image']
+                        'ffmpeg-python', 'scikit-image', 'jupyter']
       )

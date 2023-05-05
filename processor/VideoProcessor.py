@@ -54,13 +54,15 @@ class VideoProcessor:
         for i in range(len(frames)):
             new_frames.append(frames[i][start_y:end_y, start_x:end_x])
         new_frames = np.array(new_frames)
-        vid.save_video(new_frames, output_path)
+        vid = Video('', new_frames)
+        vid.save_video(output_path)
         return
 
     def generate_video_from_frames(self, frame_folder: str, saved_path: str, fps=30):
         """
         Parameters
         ----------
+        fps : int, optional
         frame_folder : str
             Path to the folder containing frames
         saved_path : str

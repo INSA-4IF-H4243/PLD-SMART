@@ -26,12 +26,13 @@ image_normalized_no_bg = image_processor.remove_background(image_normalized)
 
 
 # Display all images using cv2
-cv.imshow('Original image', imread_image)
-cv.imshow('Black and white image', image_bw)
-cv.imshow('Normalized image', image_normalized)
-cv.imshow('Original image without background', image_no_bg)
-cv.imshow('Black and white image without background', image_bw_no_bg)
+# The positions of the windows in the code are put in reverse, so the images with the background appear first.
 cv.imshow('Normalized image without background', image_normalized_no_bg)
+cv.imshow('Black and white image without background', image_bw_no_bg)
+cv.imshow('Original image without background', image_no_bg)
+cv.imshow('Normalized image', image_normalized)
+cv.imshow('Black and white image', image_bw)
+cv.imshow('Original image', imread_image)
 
 cv.waitKey(0)
 cv.destroyAllWindows()

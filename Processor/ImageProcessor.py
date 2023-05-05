@@ -1,6 +1,7 @@
 from rembg import remove, new_session
 from skimage.restoration import estimate_sigma
 import cv2
+import numpy as np
 
 
 def estimate_noise(img):
@@ -35,9 +36,14 @@ class ImageProcessor:
         np.ndarray 3-dim
             Image with background removed
         """
-        model_name = "u2net_human_seg" if (estimate_noise(input_img) < threshold) else "u2netp"
+        #model_name = "u2net_human_seg" if (estimate_noise(input_img) < threshold) else "u2netp"
+        model_name = "isnet_general_use"
         session = new_session(model_name=model_name)
-        output = remove(input_img, session=session, post_process_mask=True)
+        output = remove(input_img, session=session,
+                        post_process_mask=True, alpha_matting=True,
+                        alpha_matting_foreground_threshold=270,
+                        alpha_matting_background_threshold=20,
+                        alpha_matting_erode_structure_size=11)
         return output
 
     def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):

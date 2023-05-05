@@ -6,7 +6,11 @@ from processor import ImageProcessor
 
 
 class Video(object):
-    def __init__(self, path: str = ''):
+    def __init__(self, path: str = '', frames: np.ndarray = None):
+        if frames is not None:
+            self.frames = frames
+            self.path = path
+            return
         if not os.path.exists(path):
             raise FileNotFoundError("The file {} does not exist".format(path))
         self.path = path
@@ -19,6 +23,7 @@ class Video(object):
             frames.append(frame)
         cap.release()
         self.frames = np.array(frames)
+
 
     @classmethod
     def read_video(video, path: str = ''):
