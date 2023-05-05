@@ -131,7 +131,7 @@ class ImageProcessor:
                     new_img[i][j]=255
         
         return new_img
-    
+        
     def save_img(self, img, path: str):
         """
         Parameters

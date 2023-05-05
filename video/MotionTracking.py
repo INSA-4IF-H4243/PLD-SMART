@@ -23,8 +23,8 @@ fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
-tableauSortieJHaut=np.array(np.zeros([PixelSizeOutput, PixelSizeOutput]))
-tableauSortieJBas=np.array(np.zeros([PixelSizeOutput, PixelSizeOutput]))
+tableauSortieJHaut=[]
+tableauSortieJBas=[]
 print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
@@ -226,8 +226,8 @@ while cap.isOpened() and ret3:
             cv2.imshow("JoueurBas", thresh_bas)
 
         ###ENREGISTREMENT dans le TABLEAU
-        tableauSortieJHaut=np.append(tableauSortieJHaut, thresh_haut)
-        tableauSortieJBas=np.append(tableauSortieJBas, thresh_bas)
+        tableauSortieJHaut.append(thresh_haut/255)
+        tableauSortieJBas.append(thresh_bas/255)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -243,13 +243,32 @@ while cap.isOpened() and ret3:
     if cv2.waitKey(40) == 27:
         break
 
-###ENREGISTREMENT EN IMAGE:
-# pathJhaut=outPutPathJHaut+str(nbFrame)+'.bmp'
-# pathJbas=outPutPathJBas+str(nbFrame)+'.bmp'
+###ENREGISTREMENT DATA:
+# save numpy array as npy file
+from numpy import save
+
+
+pathJhaut=outPutPathJHaut+str(nbFrame)+'.npy'
+pathJbas=outPutPathJBas+str(nbFrame)+'.npy'
+
+
+for i in tableauSortieJHaut:
+    i=np.asmatrix(i)
+    i=i.astype(int)
+    print("\n\n,",i)
+    np.savetxt("test.csv", i, delimiter=" ")
+
+# save to npy file
+# with open('test.csv', 'wb') as f:
+#     save(f, tableauSortieJHaut)
+#     save(f, tableauSortieJBas)
+
+
+# print("JHAUT",tableauSortieJHaut)
+# print("JBAS",tableauSortieJBas)
+
 # cv2.imwrite(pathJhaut, silouhette_haut)
 # cv2.imwrite(pathJbas, silouhette_bas)
 
-print("JHAUT",tableauSortieJHaut)
-print("JBAS",tableauSortieJBas)
 cv2.destroyAllWindows()
 cap.release()
