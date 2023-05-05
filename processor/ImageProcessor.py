@@ -88,7 +88,7 @@ class ImageProcessor:
         """
         return img[start_y:end_y, start_x:end_x]
     
-    def crop_silouhette(self, img):
+    def crop_silouhette(self, img, pixelSize):
         """
         Parameters
         ----------
@@ -109,11 +109,10 @@ class ImageProcessor:
 
                     if(j>maxx):maxx=j
                     if(j<minx):minx=j
-        #print(minx, maxx,miny,maxy)
 
         if(miny<maxy and maxx>minx):
             img2=self.crop_image(img,minx, maxx,miny,maxy)
-            img3=cv2.resize(img2,(20,20))
+            img3=cv2.resize(img2,(pixelSize,pixelSize))
             return img3
         else:
             return False

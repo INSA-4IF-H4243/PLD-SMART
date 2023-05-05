@@ -10,6 +10,10 @@ ffmpeg.__path__
 from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
 from smart.video import Video, Image
 
+devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+PixelSizeOutput=20
+videoPath='video_input/video_input5.mp4'
+videoResize=(600,300)
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -60,16 +64,17 @@ def englobant(rec1, rec2):
 
 #####LECTURE
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
-cap = cv2.VideoCapture('video_input/video_input6.mp4')
+cap = cv2.VideoCapture(videoPath)
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
 
 #####AJUSTEMENT TAILLE
-frame1=cv2.resize(frame1,(600,300))
+frame1=cv2.resize(frame1,videoResize)
 milieu_y=int(len(frame1)/2)
 milieu_x=int(len(frame1[0])/2)
 print(milieu_y)
+
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
 joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
@@ -77,11 +82,9 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 while cap.isOpened():
 
     ###AJUSTEMENT TAILLE
-    frame1=cv2.resize(frame1,(600,300))
-    frame2=cv2.resize(frame2,(600,300))
-    frame3=cv2.resize(frame3,(600,300))
-
-    devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+    frame1=cv2.resize(frame1,videoResize)
+    frame2=cv2.resize(frame2,videoResize)
+    frame3=cv2.resize(frame3,videoResize)
 
     ###DIFFERENCE IMAGES POUR VOIR LES PIXELS EN MOUVEMENTS
     diff1 = cv2.absdiff(frame1, frame2)
@@ -173,19 +176,20 @@ while cap.isOpened():
     affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
     cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
-    ###AFFICHAGE
-    cv2.imshow("feed", frame1)
-    if(devMode):cv2.imshow("feed2", dilated)
-
+    ###RECUPERATION SILOUHETTE 
     (x, y, w, h) = affichageJHaut
     (x1, y1, w1, h1) = affichageJBas
     imageProcessor = ImageProcessor()
 
     crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-    silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut)
+    silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
 
     crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-    silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas)
+    silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
+
+    ###AFFICHAGE et ENREGISTREMENT
+    cv2.imshow("feed", frame1)
+    if(devMode):cv2.imshow("feed2", dilated)
 
     cv2.imshow("JoueurHaut", silouhette_haut)
     cv2.imshow("JoueurBas", silouhette_bas)
@@ -194,11 +198,12 @@ while cap.isOpened():
     #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
     #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
     #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
-    
+        
     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
-    #cv2.imwrite(saved_path, thresh)
     #cv2.imshow("JoueurHaut", silouhette_bas)
     #cv2.imshow("JoueurHautSil", thresh)
+
+    #cv2.imwrite(saved_path, thresh)
 
     frame1 = frame2
     frame2=frame3
