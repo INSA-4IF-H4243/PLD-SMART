@@ -113,9 +113,8 @@ class ImageProcessor:
         if(miny<maxy and maxx>minx):
             img2=self.crop_image(img,minx, maxx,miny,maxy)
             img3=cv2.resize(img2,(pixelSize,pixelSize))
-            return img3
-        else:
-            return False
+            img=img3
+        return img
     
     def flouter_image(self,image):
 
@@ -124,6 +123,15 @@ class ImageProcessor:
         ret,thresh = cv2.threshold(imgray,127,255,cv2.THRESH_BINARY)
         return thresh
 
+    def binary(self,image):
+        new_img=image
+        for i in range(len(new_img)):
+            for j in range(len(new_img[0])):
+                if(new_img[i][j]!=0):
+                    new_img[i][j]=255
+        
+        return new_img
+    
     def save_img(self, img, path: str):
         """
         Parameters

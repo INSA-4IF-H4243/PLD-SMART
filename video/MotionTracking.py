@@ -16,15 +16,15 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=False#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='video_input/video_input2.mp4'#chemin de la video
+videoPath='video_input/video_input3.mp4'#chemin de la video
 outPutPathJHaut='img/test/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/test/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
-#taille de lentree du machine learning = fpsOutput * PixelSizeOutput * PixelSizeOutput (20*20*20=8000 pixels noir ou blanc)
-tableauSortieJHaut=np.array(np.empty([PixelSizeOutput, PixelSizeOutput]))
-tableauSortieJBas=np.array(np.empty([PixelSizeOutput, PixelSizeOutput]))
+#taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
+tableauSortieJHaut=np.array(np.zeros([PixelSizeOutput, PixelSizeOutput]))
+tableauSortieJBas=np.array(np.zeros([PixelSizeOutput, PixelSizeOutput]))
 print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
@@ -211,12 +211,11 @@ while cap.isOpened() and ret3:
 
         crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
         silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
-        _, thresh_haut = cv2.threshold(silouhette_haut, 127, 255, cv2.THRESH_BINARY)
+        thresh_haut = imageProcessor.binary(silouhette_haut)
 
         crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
         silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
-        _, thresh_bas = cv2.threshold(silouhette_bas, 127, 255, cv2.THRESH_BINARY)
-
+        thresh_bas = imageProcessor.binary(silouhette_bas)
         ###AFFICHAGE 
         if(affichage):
 
@@ -227,8 +226,8 @@ while cap.isOpened() and ret3:
             cv2.imshow("JoueurBas", thresh_bas)
 
         ###ENREGISTREMENT dans le TABLEAU
-        np.append(tableauSortieJHaut, thresh_haut)
-        np.append(tableauSortieJBas, thresh_bas)
+        tableauSortieJHaut=np.append(tableauSortieJHaut, thresh_haut)
+        tableauSortieJBas=np.append(tableauSortieJBas, thresh_bas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -250,7 +249,7 @@ while cap.isOpened() and ret3:
 # cv2.imwrite(pathJhaut, silouhette_haut)
 # cv2.imwrite(pathJbas, silouhette_bas)
 
-print(tableauSortieJHaut)
-
+print("JHAUT",tableauSortieJHaut)
+print("JBAS",tableauSortieJBas)
 cv2.destroyAllWindows()
 cap.release()
