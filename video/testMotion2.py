@@ -60,7 +60,7 @@ def flouter(image):
 
 #cap = cv2.VideoCapture(0)
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
-cap = cv2.VideoCapture('video_input/test.mp4')
+cap = cv2.VideoCapture('video_input/video_input5.mp4')
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
@@ -184,20 +184,21 @@ while cap.isOpened():
     (x, y, w, h) = affichageJHaut
     (x1, y1, w1, h1) = affichageJBas
     imageProcessor = ImageProcessor()
-    crop_img = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-    crop_img2 = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-    test=imageProcessor.crop_silouhette(crop_img2)
+    crop_img_bas = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
+    silouhette_bas=imageProcessor.crop_silouhette(crop_img_bas)
+    #crop_img2 = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
+    #test=imageProcessor.crop_silouhette(crop_img2)
     # gray_crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
     # no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
     # _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
     #cv2.imwrite(saved_path, thresh)
-    cv2.imshow("JoueurHaut0", test)
+    #cv2.imshow("JoueurHaut0", test)
 
-    crop_img1 = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-    test2=imageProcessor.crop_silouhette(crop_img1)
-    cv2.imshow("Joueurbas1", test2)
-    cv2.imshow("Joueurbas2", crop_img1)
+    crop_img_haut = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
+    silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut)
+    #cv2.imshow("Joueurbas1", test2)
+    #cv2.imshow("Joueurbas2", crop_img1)
 
     frame1 = frame2
     frame2=frame3
