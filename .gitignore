@@ -3,8 +3,7 @@ test_ffmpeg.py
 
 build/
 smart.egg-info/
-Video/__pycache__/
-Processor/__pycache__/
+
 
 image_input/
 
