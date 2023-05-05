@@ -16,9 +16,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='video_input/video_input5.mp4'#chemin de la video
-outPutPathJHaut='img/video_input5/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/video_input5/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='dataset/v.mp4'#chemin de la video
+outPutPathJHaut='img/cd_j1/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/cd_j1/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -81,8 +81,8 @@ cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
 
-ret, frame1 = cap.read()
-ret, frame2 = cap.read()
+ret1, frame1 = cap.read()
+ret2, frame2 = cap.read()
 ret3, frame3 = cap.read()
 
 #####AJUSTEMENT TAILLE
@@ -95,7 +95,7 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() and ret3:
+while cap.isOpened() and not ret3:
 
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
@@ -232,11 +232,6 @@ while cap.isOpened() and ret3:
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
     frame2 = frame3
-    # cap.read()
-    # cap.read()
-    # cap.read()
-    # cap.read()
-    # cap.read()
     ret3, frame3 = cap.read()
     nbFrame+=1
 
