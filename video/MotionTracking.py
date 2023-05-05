@@ -13,14 +13,20 @@ from smart.video import Video, Image
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
+enregistrementImage=False#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
 videoPath='video_input/test.mp4'#chemin de la video
-outPutPathJ1='img/video_input5/j1'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJ2='img/video_input5/j2'#chemin d'enregistrement de la silouhette du Joueur 2
+outPutPathJHaut='img/test/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/test/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning = fpsOutput * PixelSizeOutput * PixelSizeOutput (20*20*20=8000 pixels noir ou blanc)
+tableauSortieJHaut=np.array()
+tableauSortieJBas=np.array()
+np.append(tableauSortieJHaut,np.empty([PixelSizeOutput, PixelSizeOutput]))
+np.append(tableauSortieJBas,np.empty([PixelSizeOutput, PixelSizeOutput]))
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -176,47 +182,52 @@ while cap.isOpened():
             joueurs[1] = minJoueur1
 
     ###DESSIN DU CONTOUR DES JOUEURS
-    decalageX = int(milieu_x/30)
-    decalageY = int(milieu_y/15)
-    
-    (x, y, w, h) = joueurs[0] #Joueur 0 du haut
-    affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
-    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
-    
-    (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
-    affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
-    cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
-
-    ###RECUPERATION SILOUHETTE 
-    (x, y, w, h) = affichageJHaut
-    (x1, y1, w1, h1) = affichageJBas
-    imageProcessor = ImageProcessor()
-
-    crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-    silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
-
-    crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-    silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
-
-    ###AFFICHAGE et ENREGISTREMENT
     if(nbFrame%rapportFps==0):
 
-        cv2.imshow("feed", frame1)
-        if(devMode):cv2.imshow("feed2", dilated)
-
-        cv2.imshow("JoueurHaut", silouhette_haut)
-        cv2.imshow("JoueurBas", silouhette_bas)
-
-    #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-    #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
-    #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
-    #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+        ###CREATION CONTOUR AVEC DECALAGE
+        decalageX = int(milieu_x/30)
+        decalageY = int(milieu_y/15)
         
-    #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
-    #cv2.imshow("JoueurHaut", silouhette_bas)
-    #cv2.imshow("JoueurHautSil", thresh)
+        (x, y, w, h) = joueurs[0] #Joueur 0 du haut
+        affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
+        cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
+        
+        (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
+        affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
+        cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
-    #cv2.imwrite(saved_path, thresh)
+        ###RECUPERATION SILOUHETTE 
+        (x, y, w, h) = affichageJHaut
+        (x1, y1, w1, h1) = affichageJBas
+        imageProcessor = ImageProcessor()
+
+        #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+        #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
+        #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
+        #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+            
+        #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
+        #cv2.imshow("JoueurHaut", silouhette_bas)
+        #cv2.imshow("JoueurHautSil", thresh)
+
+        crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
+        silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
+
+        crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
+        silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
+
+        ###AFFICHAGE 
+        if(affichage):
+
+            cv2.imshow("feed", frame1)
+            if(devMode):cv2.imshow("feed2", dilated)
+
+            cv2.imshow("JoueurHaut", silouhette_haut)
+            cv2.imshow("JoueurBas", silouhette_bas)
+
+        ###ENREGISTREMENT dans le TABLEAU
+        np.append(tableauSortieJHaut, silouhette_haut)
+        np.append(tableauSortieJBas, silouhette_bas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -231,6 +242,12 @@ while cap.isOpened():
 
     if cv2.waitKey(40) == 27:
         break
+
+###ENREGISTREMENT EN IMAGE:
+# pathJhaut=outPutPathJHaut+str(nbFrame)+'.bmp'
+# pathJbas=outPutPathJBas+str(nbFrame)+'.bmp'
+# cv2.imwrite(pathJhaut, silouhette_haut)
+# cv2.imwrite(pathJbas, silouhette_bas)
 
 cv2.destroyAllWindows()
 cap.release()
