@@ -25,26 +25,46 @@ class ImageProcessor:
     def __init__(self):
         pass
 
-    def remove_background(self, input_img, threshold = 0.3, mode_img = "RGB"):
+    def remove_background(self, input_img):
         """
         Parameters
         ----------
         input_img : np.ndarray 3-dim
             Input image
-        threshold : float, optional
-            Threshold to determine which model to use, by default 0.3
 
         Returns
         -------
         np.ndarray 3-dim
             Image with background removed
         """
-        model_name = "u2net_human_seg" if (estimate_noise(input_img) < threshold) else "u2netp"
-        session = new_session(model_name=model_name)
-        output = remove(input_img, session=session, post_process_mask=True)
-        img_output = PIL.Image.fromarray(output)
-        img_output = img_output.convert(mode_img)
-        return np.array(img_output)
+        # Blur to image to reduce noise
+        input_img = cv2.GaussianBlur(input_img, (5, 5), 0)
+
+        # We bin the pixels. Result will be a value 1..5
+        bins = np.array([0, 51, 102, 153, 204, 255])
+        input_img[:, :, :] = np.digitize(input_img[:, :, :], bins, right=True) * 51
+
+        # Create single channel greyscale for thresholding
+        input_img_grey = cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY)
+
+        # Perform Otsu thresholding and extract the background.
+        # We use Binary Threshold as we want to create an all white background
+        ret, background = cv2.threshold(input_img_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Convert black and white back into 3 channel greyscale
+        background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
+
+        # Perform Otsu thresholding and extract the foreground.
+        # We use TOZERO_INV as we want to keep some details of the foregorund
+        ret, foreground = cv2.threshold(input_img_grey, 0, 255,
+                                        cv2.THRESH_TOZERO_INV + cv2.THRESH_OTSU)  # Currently foreground is only a mask
+        foreground = cv2.bitwise_and(input_img, input_img,
+                                     mask=foreground)  # Update foreground with bitwise_and to extract real foreground
+
+        # Combine the background and foreground to obtain our final image
+        finalimage = background + foreground
+
+        return finalimage
     
     def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):
         """
@@ -98,7 +118,13 @@ class ImageProcessor:
         else:
             return False
     
-    
+    def flouter_image(self,image):
+
+        imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(imgray, (5,5), 4)
+        ret,thresh = cv2.threshold(imgray,127,255,cv2.THRESH_BINARY)
+        return thresh
+
     def save_img(self, img, path: str):
         """
         Parameters

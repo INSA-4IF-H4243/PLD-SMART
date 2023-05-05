@@ -10,6 +10,8 @@ ffmpeg.__path__
 from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
 from smart.video import Video, Image
 
+########################METHODES TRAITEMENT CONTOURS :
+
 def aire(rec):
     return rec[2]*rec[3]
 
@@ -52,44 +54,54 @@ def englobant(rec1, rec2):
         return rec3
     return rec1
 
-def flouter(image):
-    imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(imgray, (5,5), 4)
-    ret,thresh = cv2.threshold(imgray,127,255,cv2.THRESH_BINARY)
-    return thresh
+########################
 
-#cap = cv2.VideoCapture(0)
+########TRAITEMENT DE LA VIDEO
+
+#####LECTURE
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
 cap = cv2.VideoCapture('video_input/video_input6.mp4')
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
+
+#####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame1,(600,300))
 milieu_y=int(len(frame1)/2)
 milieu_x=int(len(frame1[0])/2)
-print("milieuy = ",milieu_y)
-print("milieux = ",milieu_x)
-#tableau avec joueur 0 (en bas) et joueur 1 (en haut)
-joueurs=[(milieu_x,milieu_y,50,50),(milieu_x,milieu_y,50,50)]
+print(milieu_y)
+#####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
+joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
+
+#####LECTURE IMAGE PAR IMAGE
 while cap.isOpened():
+
+    ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,(600,300))
     frame2=cv2.resize(frame2,(600,300))
     frame3=cv2.resize(frame3,(600,300))
-    devMode=False
 
+    devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+
+    ###DIFFERENCE IMAGES POUR VOIR LES PIXELS EN MOUVEMENTS
     diff1 = cv2.absdiff(frame1, frame2)
     diff2 = cv2.absdiff(frame2, frame3)
     diff= cv2.absdiff(diff1, diff2)
 
+    ###TRAITEMENT ET BINARISATION
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     #flow=cv2.calcOpticalFlowFarneback(gray, gray, None)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     _, thresh = cv2.threshold(blur, 40, 255, cv2.THRESH_OTSU)
     dilated = cv2.dilate(thresh, None, iterations=3)
+
+    ###RECHERCHE CONTOURS DES FORMES EN MOUVEMENT
     contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-    tab_rec = []
+    ###PREMIERE DISCRIMINATION DES CONTOURS
+    tab_rec = []    #contient les contours (contour=(x,y,w,h))
     for contour in contours:
+
         rec_base = cv2.boundingRect(contour)
         x = rec_base[0]
         y = rec_base[1]
@@ -97,13 +109,12 @@ while cap.isOpened():
         (x, y, w, h) = rec_base
         new_rec = rec_base
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
-        #loop copie
 
-        #traitement des contours dont la forme est clairement differente d'un tennisman
-        #cont(rec_base)<100 or
+        #élimination des contours dont la forme est clairement differente d'un tennisman
         if( cont(rec_base)<100 or cont(rec_base)>1000):continue
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
+        #fusion des contours proches
         for rec in tab_rec[:]:         
             up_low_rec = rec[1] < milieu_y*2/3
             if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
@@ -111,20 +122,15 @@ while cap.isOpened():
                 if new_rec != rec_base:
                     tab_rec.remove(rec)
         tab_rec.append(new_rec)
-    #print("nb contour = ",len(tab_rec))
-    #retirer les petits
-    #tab_rec = [rec for rec in tab_rec if ((not rec[2]<20) and not rec[3]<40)]
-    #retirer les grands
-    #tab_rec = [rec for rec in tab_rec if ((not rec[3]>350) and not rec[2]>200)]
-    #print("1: ",tab_rec)
-    #tab_rec = [rec for rec in tab_rec if ((not rec[3]>200) and (not rec[2]<50))]
-    #print("2: ",tab_rec)
 
-    for rec in tab_rec:
-        (x, y, w, h) = rec
-        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+    ###AFFICHAGE DE TOUS LES CONTOURS
+    if devMode:
+        for rec in tab_rec:
+            (x, y, w, h) = rec
+            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
-    if(len(tab_rec)==2):
+    ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
+    if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
             joueurs[0]=tab_rec[0]
             joueurs[1]=tab_rec[1]
@@ -132,20 +138,20 @@ while cap.isOpened():
             joueurs[0]=tab_rec[1]
             joueurs[1]=tab_rec[0]
 
-    else:
-        #cherche carré les plus proches des joueurs
-        minJoueur0=(0,0,0,0)
-        minJoueur1=(0,0,0,0)
+    else:                       #Sinon on prend les contours les plus proches des anciens contours identifiés comme ceux des joueurs (=tracking)
+        minJoueur0=(milieu_x-25,milieu_y-75,50,50)
+        minJoueur1=(milieu_x-25,milieu_y+75,50,50)
         b0 = 0
         b1 = 0
-        for rec in tab_rec:           
+        for rec in tab_rec: 
+            #joueur du haut          
             if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
                 #if distance2(joueurs[0],rec) < 5*5:
                     if devMode:print("joueur0")
                     if devMode:print(similarite(joueurs[0],rec))
                     minJoueur0=rec
                     b0 = 1
-#and similarite(joueurs[1],rec) < 2000 and rec[1]>420:
+            #joueur du bas
             elif distance2(joueurs[1],rec) < distance2(minJoueur1,joueurs[1]) and (centre(rec)[1]>milieu_y):
                 #if distance2(joueurs[1],rec) < 5*5:
                     minJoueur1=rec  
@@ -155,54 +161,44 @@ while cap.isOpened():
         if b1:
             joueurs[1] = minJoueur1
 
-    #affichage des joueurs
+    ###DESSIN DU CONTOUR DES JOUEURS
     decalageX = int(milieu_x/30)
     decalageY = int(milieu_y/15)
-
-    # w1=max(joueurs[1][2]+ decalageX + 20,150)
-    # h1=max(joueurs[1][3]+ decalageY + 20,250)
-    # w0=max(joueurs[0][2]+ decalageX + 20,150)
-    # h0=max(joueurs[0][3]+ decalageY + 20,150)
-
-    # joueurs[0]=(joueurs[0][0]-50, joueurs[0][1]-20,w0,h0)
-    # joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
-
-    #Jhaut
-    (x, y, w, h) = joueurs[0]
-    #w=max(w0,25)
-    #h=max(h0,40)
     
+    (x, y, w, h) = joueurs[0] #Joueur 0 du haut
     affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
-    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 255, 0), 2)
-    #jbas
-    (x1, y1, w1, h1) = joueurs[1]
-    #w=max(w1,75)
-    #h=max(h1,120)
+    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
+    
+    (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
     affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
     cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
-    cv2.imshow("feed", frame1)
-    if(devMode):cv2.imshow("feed2", frame1)
-    #cv2.imshow("feed2", dilated)
 
+    ###AFFICHAGE
+    cv2.imshow("feed", frame1)
+    if(devMode):cv2.imshow("feed2", dilated)
 
     (x, y, w, h) = affichageJHaut
     (x1, y1, w1, h1) = affichageJBas
     imageProcessor = ImageProcessor()
-    crop_img_bas = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-    silouhette_bas=imageProcessor.crop_silouhette(crop_img_bas)
-    #crop_img2 = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-    #test=imageProcessor.crop_silouhette(crop_img2)
-    # gray_crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
-    # no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
-    # _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+
+    crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
+    silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut)
+
+    crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
+    silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas)
+
+    cv2.imshow("JoueurHaut", silouhette_haut)
+    cv2.imshow("JoueurBas", silouhette_bas)
+
+    #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+    #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
+    #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
+    #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+    
     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
     #cv2.imwrite(saved_path, thresh)
-    cv2.imshow("JoueurHaut", silouhette_bas)
-
-    crop_img_haut = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-    silouhette_haut = imageProcessor.crop_silouhette(crop_img_haut)
-    #cv2.imshow("Joueurbas1", test2)
-    cv2.imshow("JoueurBas", silouhette_haut)
+    #cv2.imshow("JoueurHaut", silouhette_bas)
+    #cv2.imshow("JoueurHautSil", thresh)
 
     frame1 = frame2
     frame2=frame3
