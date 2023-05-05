@@ -1,10 +1,9 @@
-from rembg import remove, new_session
 from skimage.restoration import estimate_sigma
 import cv2
-import PIL
 import numpy as np
 from ..video.Video import Video
 import os
+
 
 def estimate_noise(img):
     """
@@ -65,7 +64,7 @@ class ImageProcessor:
         finalimage = background + foreground
 
         return finalimage
-    
+        
     def crop_image(self, img, start_x: int, end_x: int, start_y: int, end_y: int):
         """
         Parameters
@@ -80,7 +79,7 @@ class ImageProcessor:
             Starting y coordinate
         end_y : int
             Ending y coordinate
-        
+
         Returns
         -------
         Image : np.ndarray 3-dim
@@ -143,15 +142,14 @@ class ImageProcessor:
         """
         cv2.imwrite(path, img)
         return
-    
+
     def crop_shadow_player_save(self, video: Video, nb_start: int, nb_end: int,
                                 start_x: int, end_x: int,
                                 start_y: int, end_y: int,
-                                folder_path: str, threshold: float = 1.1,
-                                mode_img: str = "RGB"):
+                                folder_path: str):
         """
         Crop the shadow player from the video and save the cropped images to a folder
-        
+
         Parameters
         ----------
         video: Video
@@ -178,54 +176,10 @@ class ImageProcessor:
         list_frames = video.frames[nb_start:nb_end]
         for i in range(nb_start, nb_end):
             crop_img = self.crop_image(list_frames[i], start_x, end_x, start_y, end_y)
-            gray_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
-            no_bg_img = self.remove_background(gray_img, threshold, mode_img)
-            _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+            no_bg_img = self.remove_background(crop_img)
+            gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+            inverted_img = cv2.bitwise_not(gray_img)
+            _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
             cv2.imwrite(saved_path, thresh)
         return
-    
-'''
-def remove_background_old(image):
-    # Thresholding the image
-    lower = np.array([200, 200, 200])
-    upper = np.array([255, 255, 255])
-    thresh = cv.inRange(image, lower, upper)
-
-    # Apply morphology
-    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (20, 20))
-    morph = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
-
-    # Invert the image
-    mask = 255 - morph
-    result = cv.bitwise_and(image, image, mask=mask)
-
-    # Save the results
-    cv.imwrite("..\\TestRemoveBackground\\thresh.png", thresh)
-    cv.imwrite("..\\TestRemoveBackground\\morph.png", morph)
-    cv.imwrite("..\\TestRemoveBackground\\mask.png", mask)
-    cv.imwrite("..\\TestRemoveBackground\\result.png", result)
-
-    # Show the results
-    cv.imshow('thresh', thresh)
-    cv.imshow('morph', morph)
-    cv.imshow('mask', mask)
-    cv.imshow('result', result)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-    return result
-
-
-# Remove background adaptively
-def remove_background_adaptive_old(image):
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    thresh1 = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 51, 25)
-    cv.imwrite("..\\TestRemoveBackground\\thresh1.png", thresh1)
-    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (11, 11))
-    morph = cv.morphologyEx(thresh1, cv.MORPH_DILATE, kernel)
-    division = cv.divide(gray, morph, scale=255)
-    thresh2 = cv.threshold(division, 0, 255, cv.THRESH_OTSU)[1]
-    cv.imwrite("..\\TestRemoveBackground\\thresh2.png", thresh2)
-    return thresh2
-'''
