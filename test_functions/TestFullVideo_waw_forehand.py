@@ -25,4 +25,4 @@ for key in strat_dict.keys():
     for i in range(len(cropped_frames)):
         output = os.path.join(output_path, key, "frame{}.jpg".format(i))
         image_processor.save_img(strategy(cropped_frames[i]), output)
-    print("Time for {} is {}".format(key, time.time() - start_time))
+    print("Time for {} is {:.2f}s".format(key, time.time() - start_time))
