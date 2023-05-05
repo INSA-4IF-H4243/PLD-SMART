@@ -82,15 +82,14 @@ class Video(object):
         threshold: float
             The threshold to remove the background
         """
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         image_processor = ImageProcessor()
         for i in range(nb_start, nb_end):
             crop_img = image_processor.crop_image(self.frames[i], start_x, end_x, start_y, end_y)
             gray_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
             no_bg_img = image_processor.remove_background(gray_img, threshold)
             _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
-            
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
             cv2.imwrite(saved_path, thresh)
         return
