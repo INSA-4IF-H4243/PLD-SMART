@@ -76,7 +76,6 @@ cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
 
-print(f"{fps} frames per second")
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
@@ -85,7 +84,6 @@ ret, frame3 = cap.read()
 frame1=cv2.resize(frame1,videoResize)
 milieu_y=int(len(frame1)/2)
 milieu_x=int(len(frame1[0])/2)
-print(milieu_y)
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
 joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
