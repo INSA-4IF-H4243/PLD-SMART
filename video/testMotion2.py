@@ -47,7 +47,7 @@ def englobant(rec1, rec2):
     y2 = max(rec1[1]+rec1[3], rec2[1]+rec2[3])
     w = x2-x1
     h = y2-y1
-    if h < milieu_x and w < milieu_y:
+    if h < 150 and w < 50:
         rec3 = (x1,y1,w,h)
         return rec3
     return rec1
@@ -60,7 +60,7 @@ def flouter(image):
 
 #cap = cv2.VideoCapture(0)
 #cap = cv2.VideoCapture('rv_j1/cut6.mp4')
-cap = cv2.VideoCapture('video_input/video_input5.mp4')
+cap = cv2.VideoCapture('video_input/video_input6.mp4')
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
@@ -70,7 +70,7 @@ milieu_x=int(len(frame1[0])/2)
 print("milieuy = ",milieu_y)
 print("milieux = ",milieu_x)
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
-joueurs=[(milieu_x,milieu_y,100,200),(milieu_x,milieu_y,150,250)]
+joueurs=[(milieu_x,milieu_y,50,50),(milieu_x,milieu_y,50,50)]
 while cap.isOpened():
     frame1=cv2.resize(frame1,(600,300))
     frame2=cv2.resize(frame2,(600,300))
@@ -93,7 +93,7 @@ while cap.isOpened():
         rec_base = cv2.boundingRect(contour)
         x = rec_base[0]
         y = rec_base[1]
-        up_low_base = y < 420
+        up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
@@ -102,10 +102,11 @@ while cap.isOpened():
         #traitement des contours dont la forme est clairement differente d'un tennisman
         #cont(rec_base)<100 or
         if( cont(rec_base)<100 or cont(rec_base)>1000):continue
-        if(rec_base[2]/rec_base[3]>3 or rec_base[3]/rec_base[2]>3):continue
+        if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
+
         for rec in tab_rec[:]:         
-            up_low_rec = rec[1] < milieu_y
-            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 70) :
+            up_low_rec = rec[1] < milieu_y*2/3
+            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
                 new_rec = englobant(rec_base, rec)
                 if new_rec != rec_base:
                     tab_rec.remove(rec)
@@ -196,12 +197,12 @@ while cap.isOpened():
     # _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
     #cv2.imwrite(saved_path, thresh)
-    #cv2.imshow("JoueurHaut0", test)
+    cv2.imshow("JoueurBas", silouhette_bas)
 
     crop_img_haut = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
     silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut)
     #cv2.imshow("Joueurbas1", test2)
-    #cv2.imshow("Joueurbas2", crop_img1)
+    cv2.imshow("JoueurHaut", silouhette_haut)
 
     frame1 = frame2
     frame2=frame3
