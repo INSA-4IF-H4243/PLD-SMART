@@ -16,9 +16,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='video_input/video_input3.mp4'#chemin de la video
-outPutPathJHaut='img/test/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/test/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='video_input/video_input5.mp4'#chemin de la video
+outPutPathJHaut='img/video_input5/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/video_input5/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -243,7 +243,7 @@ while cap.isOpened() and ret3:
     if cv2.waitKey(40) == 27:
         break
 
-###ENREGISTREMENT DATA:
+###ENREGISTREMENT DONNEES:
 
 from numpy import save
 import os
