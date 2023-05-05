@@ -3,10 +3,11 @@ test_ffmpeg.py
 
 build/
 smart.egg-info/
-Video/__pycache__/
-Processor/__pycache__/
+video/__pycache__/
+processor/__pycache__/
 
 image_input/
+TestRemoveBackground/
 
 # PyCharm #
 .idea/
