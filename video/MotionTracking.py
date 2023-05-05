@@ -95,7 +95,7 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() and not ret3:
+while cap.isOpened() and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
 
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
