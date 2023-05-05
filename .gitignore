@@ -1,5 +1,9 @@
-img/
-read_img.py
-build/
-smart.egg-info/
-Video/__pycache__/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+input
+output
+venv
+rv_j1
+
+./vscode
+./.vscode
