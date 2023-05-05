@@ -38,7 +38,7 @@ def englobant(rec1, rec2):
     y2 = max(rec1[1]+rec1[3], rec2[1]+rec2[3])
     w = x2-x1
     h = y2-y1
-    if h < 300 and w < 200:
+    if h < milieu_x and w < milieu_y:
         rec3 = (x1,y1,w,h)
         return rec3
     return rec1
@@ -143,8 +143,8 @@ while cap.isOpened():
             joueurs[1] = minJoueur1
 
     #affichage des joueurs
-    decalageX = 15
-    decalageY = 20
+    decalageX = int(milieu_x/30)
+    decalageY = int(milieu_y/15)
 
     # w1=max(joueurs[1][2]+ decalageX + 20,150)
     # h1=max(joueurs[1][3]+ decalageY + 20,250)
@@ -155,26 +155,26 @@ while cap.isOpened():
     # joueurs[1]=(joueurs[1][0]-50, joueurs[1][1]-20,w1,h1)
 
     #Jhaut
-    (x, y, w0, h0) = joueurs[0]
-    w=max(w0,25)
-    h=max(h0,40)
+    (x, y, w, h) = joueurs[0]
+    #w=max(w0,25)
+    #h=max(h0,40)
     
     cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
     #jbas
-    (x, y, w1, h1) = joueurs[1]
-    w=max(w1,75)
-    h=max(h1,120)
-    cv2.rectangle(frame1, (x-decalageX, y-decalageY), (x+w+decalageX, y+h+decalageY), (0, 255, 0), 2)
+    (x1, y1, w1, h1) = joueurs[1]
+    #w=max(w1,75)
+    #h=max(h1,120)
+    cv2.rectangle(frame1, (x1-decalageX, y1-decalageY), (x1+w1+decalageX, y1+h1+decalageY), (0, 255, 0), 2)
     cv2.imshow("feed", frame1)
     if(devMode):cv2.imshow("feed2", dilated)
     #cv2.imshow("feed2", dilated)
     frame1 = frame2
     frame2=frame3
-    cap.read()
-    cap.read()
-    cap.read()
-    cap.read()
-    cap.read()
+    # cap.read()
+    # cap.read()
+    # cap.read()
+    # cap.read()
+    # cap.read()
     ret, frame3 = cap.read()
 
     if cv2.waitKey(40) == 27:
