@@ -64,7 +64,7 @@ cap = cv2.VideoCapture('video_input/video_input6.mp4')
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
 ret, frame3 = cap.read()
-frame1=cv2.resize(frame1,(600,300))
+# frame1=cv2.resize(frame1,(600,300))
 milieu_y=int(len(frame1)/2)
 milieu_x=int(len(frame1[0])/2)
 print("milieuy = ",milieu_y)
@@ -72,9 +72,9 @@ print("milieux = ",milieu_x)
 #tableau avec joueur 0 (en bas) et joueur 1 (en haut)
 joueurs=[(milieu_x,milieu_y,50,50),(milieu_x,milieu_y,50,50)]
 while cap.isOpened():
-    frame1=cv2.resize(frame1,(600,300))
-    frame2=cv2.resize(frame2,(600,300))
-    frame3=cv2.resize(frame3,(600,300))
+    # frame1=cv2.resize(frame1,(600,300))
+    # frame2=cv2.resize(frame2,(600,300))
+    # frame3=cv2.resize(frame3,(600,300))
     devMode=False
 
     diff1 = cv2.absdiff(frame1, frame2)
@@ -197,12 +197,12 @@ while cap.isOpened():
     # _, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
     #cv2.imwrite(saved_path, thresh)
-    cv2.imshow("JoueurBas", silouhette_bas)
+    cv2.imshow("JoueurHaut", silouhette_bas)
 
     crop_img_haut = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
     silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut)
     #cv2.imshow("Joueurbas1", test2)
-    cv2.imshow("JoueurHaut", silouhette_haut)
+    cv2.imshow("JoueurBas", silouhette_haut)
 
     frame1 = frame2
     frame2=frame3

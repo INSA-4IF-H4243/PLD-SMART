@@ -79,19 +79,24 @@ class ImageProcessor:
         maxy=0
         minx=len(img[0])
         maxx=0
+        
+        vide=True
         for i in range(len(img)):
             for j in range(len(img[0])):
                 if(img[i][j]==255):
-
+                    vide=False
                     if(i>maxy):maxy=i
                     if(i<miny):miny=i
 
                     if(j>maxx):maxx=j
                     if(j<minx):minx=j
-
-        img2=self.crop_image(img,minx, maxx,miny,maxy)
-        img3=cv2.resize(img2,(20,20))
-        return img3
+        if(not vide):
+            img2=self.crop_image(img,minx, maxx,miny,maxy)
+            img3=cv2.resize(img2,(20,20))
+            return img3
+        else:
+            return False
+    
     
     def save_img(self, img, path: str):
         """
