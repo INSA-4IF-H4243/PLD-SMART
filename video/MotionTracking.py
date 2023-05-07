@@ -12,7 +12,7 @@ from smart.video import Video, Image
 
 ########################PARAMETRES :
 
-devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
@@ -95,7 +95,7 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
+while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
 
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
