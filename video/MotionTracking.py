@@ -5,6 +5,7 @@ import random
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from copy import deepcopy
 import ffmpeg
 ffmpeg.__path__
 from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
@@ -16,7 +17,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/v.mp4'#chemin de la video
+videoPath='dataset/video_cut.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j1/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j1/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
@@ -25,7 +26,7 @@ videoResize=(600,300)#taille pour resize de la video pour traitement (petite tai
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
-print(tableauSortieJHaut)
+# print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -66,10 +67,15 @@ def englobant(rec1, rec2):
     y2 = max(rec1[1]+rec1[3], rec2[1]+rec2[3])
     w = x2-x1
     h = y2-y1
-    if h < 150 and w < 50:
+    if (h < 150 and w < 100) or englobe(rec1, rec2) or englobe(rec2, rec1):
         rec3 = (x1,y1,w,h)
         return rec3
     return rec1
+
+def englobe(rec1, rec2) : 
+    if (rec1[0] <= (rec2[0]+10) and rec1[1] <= (rec2[1]+10) and (rec1[0]+rec1[2]) >= (rec2[0]+rec2[2]-10) and (rec1[1]+rec1[3]) >= (rec2[1]+rec2[3]-10) ) :
+        return True
+    return False
 
 ########################
 
@@ -91,7 +97,9 @@ milieu_y=int(len(frame1)/2)
 milieu_x=int(len(frame1[0])/2)
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
-joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
+joueurs=[(milieu_x-25,milieu_y-100,50,50),(milieu_x-25,milieu_y+75,50,50)]
+balle = (milieu_x-25,milieu_y,50,50)
+balle_detecte = False
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
@@ -119,6 +127,7 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
     
     ###PREMIERE DISCRIMINATION DES CONTOURS
     tab_rec = []    #contient les contours (contour=(x,y,w,h))
+    ball_rec = []
     for contour in contours:
 
         rec_base = cv2.boundingRect(contour)
@@ -127,20 +136,29 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
         up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
+
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
-        if( cont(rec_base)<100 or cont(rec_base)>1000):continue
+
+        if(cont(rec_base)>1000):continue
+
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
-        #fusion des contours proches
-        for rec in tab_rec[:]:         
-            up_low_rec = rec[1] < milieu_y*2/3
-            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
-                new_rec = englobant(rec_base, rec)
-                if new_rec != rec_base:
-                    tab_rec.remove(rec)
-        tab_rec.append(new_rec)
+        ball_rec.append(new_rec)
+
+        if(cont(rec_base)>100):
+
+            #fusion des contours proches
+            for rec in tab_rec[:]:         
+                up_low_rec = rec[1] < milieu_y*2/3
+                if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
+                    new_rec = englobant(rec_base, rec)
+                    if new_rec != rec_base:
+                        tab_rec.remove(rec)
+                        if rec in ball_rec : ball_rec.remove(rec)
+            tab_rec.append(new_rec)
+            if new_rec in ball_rec : ball_rec.remove(new_rec)
 
     ###AFFICHAGE DE TOUS LES CONTOURS
     if devMode:
@@ -166,8 +184,8 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
             #joueur du haut          
             if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
                 #if distance2(joueurs[0],rec) < 5*5:
-                    if devMode:print("joueur0")
-                    if devMode:print(similarite(joueurs[0],rec))
+                    # if devMode:print("joueur0")
+                    # if devMode:print(similarite(joueurs[0],rec))
                     minJoueur0=rec
                     b0 = 1
             #joueur du bas
@@ -180,7 +198,40 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
         if b1:
             joueurs[1] = minJoueur1
 
-    ###DESSIN DU CONTOUR DES JOUEURS
+    #Filtration de la balle avec les joueurs
+
+    for rec1 in joueurs:
+        for rec2 in ball_rec[:] :
+            if englobe(rec1, rec2) or englobe(rec1, rec2): 
+                ball_rec.remove(rec2)
+    
+    #Englober les contours de balle
+    for rec1 in ball_rec[:]:
+        superpose = False
+        for rec2 in ball_rec[:]:         
+            if superposition(rec1, rec2) :
+                new_rec = englobant(rec1, rec2)
+                if new_rec != rec2 and new_rec != rec1:
+                    ball_rec.remove(rec2)
+                    ball_rec.append(new_rec)
+                    superpose = True
+        if superpose : 
+           if rec1 in ball_rec : ball_rec.remove(rec1)
+
+    # Trouver la balle
+
+    minBalle = (1000000, 1000000, 1000000, 1000000, 1000000)
+    bBalle = 0
+    for rec in ball_rec :
+        if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 1000 and balle_detecte:
+            minBalle=rec  
+            bBalle = 1
+    if bBalle : balle = minBalle
+    
+    (x, y, w, h) = balle
+    cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
+
+    # ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps==0):
 
         ###CREATION CONTOUR AVEC DECALAGE
@@ -195,39 +246,49 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
         cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
-        ###RECUPERATION SILOUHETTE 
-        (x, y, w, h) = affichageJHaut
-        (x1, y1, w1, h1) = affichageJBas
-        imageProcessor = ImageProcessor()
+        # copy = deepcopy(ball_rec)
+        # for rec2 in copy :
+        #     if englobe(affichageJHaut, rec2) or englobe(affichageJBas, rec2): 
+        #         ball_rec.remove(rec2)
 
-        #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
-        #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
-        #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
+    #     ###RECUPERATION SILOUHETTE 
+    #     (x, y, w, h) = affichageJHaut
+    #     (x1, y1, w1, h1) = affichageJBas
+    #     imageProcessor = ImageProcessor()
+
+    #     #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+    #     #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
+    #     #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
+    #     #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
             
-        #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
-        #cv2.imshow("JoueurHaut", silouhette_bas)
-        #cv2.imshow("JoueurHautSil", thresh)
+    #     #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
+    #     #cv2.imshow("JoueurHaut", silouhette_bas)
+    #     #cv2.imshow("JoueurHautSil", thresh)
 
-        crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-        silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
-        thresh_haut = imageProcessor.binary(silouhette_haut)
+    #     crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
+    #     silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
+    #     thresh_haut = imageProcessor.binary(silouhette_haut)
 
-        crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-        silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
-        thresh_bas = imageProcessor.binary(silouhette_bas)
+    #     crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
+    #     silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
+    #     thresh_bas = imageProcessor.binary(silouhette_bas)
         ###AFFICHAGE 
         if(affichage):
+
+            # if devMode:
+            #     for rec in ball_rec:
+            #         (x, y, w, h) = rec
+            #         cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
             cv2.imshow("feed", frame1)
             if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("JoueurHaut", thresh_haut)
-            cv2.imshow("JoueurBas", thresh_bas)
+        #     cv2.imshow("JoueurHaut", thresh_haut)
+        #     cv2.imshow("JoueurBas", thresh_bas)
 
-        ###ENREGISTREMENT dans le TABLEAU
-        tableauSortieJHaut.append(thresh_haut/255)
-        tableauSortieJBas.append(thresh_bas/255)
+        # ###ENREGISTREMENT dans le TABLEAU
+        # tableauSortieJHaut.append(thresh_haut/255)
+        # tableauSortieJBas.append(thresh_bas/255)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -238,38 +299,38 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
     if cv2.waitKey(40) == 27:
         break
 
-###ENREGISTREMENT DONNEES:
+# ###ENREGISTREMENT DONNEES:
 
-from numpy import save
-import os
+# from numpy import save
+# import os
 
-count=0
+# count=0
 
-if not os.path.exists(outPutPathJBas):
-            os.makedirs(outPutPathJBas)
-for i in tableauSortieJBas:
-    count+=1
-    saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJBas, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
+# if not os.path.exists(outPutPathJBas):
+#             os.makedirs(outPutPathJBas)
+# for i in tableauSortieJBas:
+#     count+=1
+#     saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
+#     i=np.asmatrix(i)
+#     i=i.astype(int)
+#     np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
+#     if(enregistrementImage):
+#          saved_pathIm = os.path.join(outPutPathJBas, 'frame_{}.jpg'.format(count))
+#          cv2.imwrite(saved_pathIm, i*255)
 
-count=0
+# count=0
 
-if not os.path.exists(outPutPathJHaut):
-            os.makedirs(outPutPathJHaut)
-for i in tableauSortieJHaut:
-    count+=1
-    saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJHaut, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
+# if not os.path.exists(outPutPathJHaut):
+#             os.makedirs(outPutPathJHaut)
+# for i in tableauSortieJHaut:
+#     count+=1
+#     saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
+#     i=np.asmatrix(i)
+#     i=i.astype(int)
+#     np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
+#     if(enregistrementImage):
+#          saved_pathIm = os.path.join(outPutPathJHaut, 'frame_{}.jpg'.format(count))
+#          cv2.imwrite(saved_pathIm, i*255)
 
 cv2.destroyAllWindows()
 cap.release()
