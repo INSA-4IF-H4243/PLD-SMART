@@ -16,9 +16,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/v.mp4'#chemin de la video
-outPutPathJHaut='img/cd_j1/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/cd_j1/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='dataset/slice_rv_j1/cut3_dpSDa4ih.mp4'#chemin de la video
+outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -38,15 +38,15 @@ def centre(rec):
     return centre
 
 def similarite(rec1,rec2):
-    distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
-    differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
-    return distance
+     distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
+     #differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
+     return distance
 
 def distance2(rec1,rec2):
     distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
     return distance
 
-def cont(rec):
+def contour_taille(rec):
     contour=rec[2]*2+rec[3]*2
     return contour
 
@@ -80,6 +80,7 @@ def englobant(rec1, rec2):
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
+imageProcessor = ImageProcessor()
 
 ret1, frame1 = cap.read()
 ret2, frame2 = cap.read()
@@ -95,8 +96,9 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
-
+print("...")
+while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
+    #print(frame3)
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
     frame2=cv2.resize(frame2,videoResize)
@@ -130,7 +132,7 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
-        if( cont(rec_base)<100 or cont(rec_base)>1000):continue
+        if( contour_taille(rec_base)<100 or contour_taille(rec_base)>1000):continue
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
         #fusion des contours proches
@@ -181,16 +183,15 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
             joueurs[1] = minJoueur1
 
     ###DESSIN DU CONTOUR DES JOUEURS
-    if(nbFrame%rapportFps==0):
+    if(nbFrame%rapportFps<1):
 
         ###CREATION CONTOUR AVEC DECALAGE
         decalageX = int(milieu_x/30)
         decalageY = int(milieu_y/15)
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
-        affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
+        affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
         cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
-        
         (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
         cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
@@ -198,36 +199,25 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
-        imageProcessor = ImageProcessor()
 
-        #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
-        #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
-        #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
-            
-        #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
-        #cv2.imshow("JoueurHaut", silouhette_bas)
-        #cv2.imshow("JoueurHautSil", thresh)
+        crop_imgBas = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
+        silouhetteBas=imageProcessor.binarySilouhette(crop_imgBas,PixelSizeOutput)
 
-        crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-        silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
-        thresh_haut = imageProcessor.binary(silouhette_haut)
+        crop_imgHaut = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+        silouhetteHaut=imageProcessor.binarySilouhette(crop_imgHaut,PixelSizeOutput)
 
-        crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-        silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
-        thresh_bas = imageProcessor.binary(silouhette_bas)
         ###AFFICHAGE 
         if(affichage):
 
             cv2.imshow("feed", frame1)
             if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("JoueurHaut", thresh_haut)
-            cv2.imshow("JoueurBas", thresh_bas)
+            cv2.imshow("JoueurHaut", silouhetteHaut)
+            cv2.imshow("JoueurBas", silouhetteBas)
 
-        ###ENREGISTREMENT dans le TABLEAU
-        tableauSortieJHaut.append(thresh_haut/255)
-        tableauSortieJBas.append(thresh_bas/255)
+        ###ENREGISTREMENT des silouhettes dans le TABLEAU
+        tableauSortieJHaut.append(silouhetteHaut/255)
+        tableauSortieJBas.append(silouhetteBas/255)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -238,38 +228,12 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
     if cv2.waitKey(40) == 27:
         break
 
-###ENREGISTREMENT DONNEES:
-
-from numpy import save
-import os
-
-count=0
-
-if not os.path.exists(outPutPathJBas):
-            os.makedirs(outPutPathJBas)
-for i in tableauSortieJBas:
-    count+=1
-    saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJBas, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
-
-count=0
-
-if not os.path.exists(outPutPathJHaut):
-            os.makedirs(outPutPathJHaut)
-for i in tableauSortieJHaut:
-    count+=1
-    saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJHaut, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
-
 cv2.destroyAllWindows()
 cap.release()
+
+###ENREGISTREMENT DONNEES:
+
+imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
+imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
+
+print("fin")
