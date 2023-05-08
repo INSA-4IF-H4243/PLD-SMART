@@ -20,7 +20,7 @@ videoPath='dataset/v.mp4'#chemin de la video
 outPutPathJHaut='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
-fpsOutput=20#FPS de la sortie
+fpsOutput=7#FPS de la sortie
 cutFrameNB=15#nombre d'images pour un coups
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -29,7 +29,7 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 print(tableauSortieJHaut)
 
-tabCoups=["coup droit","revers","deplacement","service"]
+tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -84,7 +84,7 @@ cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
 imageProcessor = ImageProcessor()
-
+countSave=0
 ret1, frame1 = cap.read()
 ret2, frame2 = cap.read()
 ret3, frame3 = cap.read()
@@ -188,6 +188,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps<1):
 
+        countSave+=1
+
         ###CREATION CONTOUR AVEC DECALAGE
         decalageX = int(milieu_x/30)
         decalageY = int(milieu_y/15)
@@ -222,29 +224,31 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
 
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+        if countSave%cutFrameNB==0:
+
+            print("dernier coup du joueur en haut:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJHaut=int(input())
+
+            print("dernier coup du joueur en bas:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJBas=int(input())
+
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut,outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas,outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+
+            tableauSortieJHaut=[]
+            tableauSortieJBas=[]
+
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
     frame2 = frame3
     ret3, frame3 = cap.read()
     nbFrame+=1
-    ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
-    if nbFrame%cutFrameNB==0:
 
-        print("dernier coup du joueur en haut:")
-        for i in range(len(tabCoups)):
-            print(i," : ",tabCoups[i])
-        coupJHaut=tabCoups[int(input())]
-
-        print("dernier coup du joueur en bas:")
-        for i in range(len(tabCoups)):
-            print(i," : ",tabCoups[i])
-        coupJBas=tabCoups[int(input())]
-
-        imageProcessor.save_ImageList(tableauSortieJHaut,outPutPath+"JHaut"+coupJHaut+outPutPathJHaut+str(nbFrame),enregistrementImage)
-        imageProcessor.save_ImageList(tableauSortieJBas,outPutPath+"JHaut"+coupJBas+outPutPathJHaut+str(nbFrame),enregistrementImage)
-
-        tableauSortieJHaut=[]
-        tableauSortieJBas=[]
     if cv2.waitKey(40) == 27:
         break
 
