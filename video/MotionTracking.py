@@ -38,15 +38,15 @@ def centre(rec):
     return centre
 
 def similarite(rec1,rec2):
-    distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
-    differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
-    return distance
+     distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
+     #differenceAire = abs((rec2[2]*rec2[3])-(rec1[2]*rec1[3]))
+     return distance
 
 def distance2(rec1,rec2):
     distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
     return distance
 
-def cont(rec):
+def contour_taille(rec):
     contour=rec[2]*2+rec[3]*2
     return contour
 
@@ -132,7 +132,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
-        if( cont(rec_base)<100 or cont(rec_base)>1000):continue
+        if( contour_taille(rec_base)<100 or contour_taille(rec_base)>1000):continue
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
         #fusion des contours proches
@@ -200,14 +200,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
 
-        #Jbas
         crop_imgBas = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
         silouhetteBas=imageProcessor.binarySilouhette(crop_imgBas,PixelSizeOutput)
 
-        #JHaut
         crop_imgHaut = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
         silouhetteHaut=imageProcessor.binarySilouhette(crop_imgHaut,PixelSizeOutput)
-
 
         ###AFFICHAGE 
         if(affichage):
@@ -218,7 +215,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             cv2.imshow("JoueurHaut", silouhetteHaut)
             cv2.imshow("JoueurBas", silouhetteBas)
 
-        ###ENREGISTREMENT dans le TABLEAU
+        ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
 
