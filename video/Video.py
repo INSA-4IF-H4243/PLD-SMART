@@ -47,11 +47,16 @@ class Video(object):
             cv2.imwrite(saved_path, self.frames[i])
         return
     
-    def save_some_frames(self, nb_start: int = 0, nb_end: int = 30, folder_path: str =''):
+    def save_some_frames(self, list_nb_frames, folder_path: str =''):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        for i in range(nb_start, nb_end):
-            saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
+        for i in list_nb_frames:
+            if i < 10:
+                saved_path = os.path.join(folder_path, 'frame_00{}.jpg'.format(i))
+            elif i >= 10 and i < 100:
+                saved_path = os.path.join(folder_path, 'frame_0{}.jpg'.format(i))
+            else:
+                saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
             cv2.imwrite(saved_path, self.frames[i])
         return
         
