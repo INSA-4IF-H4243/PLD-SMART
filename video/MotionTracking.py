@@ -200,26 +200,13 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
 
-
         #Jbas
-        crop_img_basSil = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
-        no_bg_img = imageProcessor.remove_background(crop_img_basSil)
-        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
-        inverted_img = cv2.bitwise_not(gray_img)
-        _, thresh2B = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
-
-        silouhette_bas = imageProcessor.crop_silouhette(thresh2B, PixelSizeOutput)
-        thresh_bas = imageProcessor.binary(silouhette_bas)
+        crop_imgBas = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
+        silouhetteBas=imageProcessor.binarySilouhette(crop_imgBas,PixelSizeOutput)
 
         #JHaut
-        crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        no_bg_img = imageProcessor.remove_background(crop_img_basSil)
-        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
-        inverted_img = cv2.bitwise_not(gray_img)
-        _, thresh2H = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
-
-        silouhette_haut=imageProcessor.crop_silouhette(thresh2H, PixelSizeOutput)
-        thresh_haut = imageProcessor.binary(silouhette_haut)
+        crop_imgHaut = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+        silouhetteHaut=imageProcessor.binarySilouhette(crop_imgHaut,PixelSizeOutput)
 
 
         ###AFFICHAGE 
@@ -228,12 +215,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             cv2.imshow("feed", frame1)
             if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("JoueurHaut", thresh_haut)
-            cv2.imshow("JoueurBas", thresh_bas)
+            cv2.imshow("JoueurHaut", silouhetteHaut)
+            cv2.imshow("JoueurBas", silouhetteBas)
 
         ###ENREGISTREMENT dans le TABLEAU
-        tableauSortieJHaut.append(thresh_haut/255)
-        tableauSortieJBas.append(thresh_bas/255)
+        tableauSortieJHaut.append(silouhetteHaut/255)
+        tableauSortieJBas.append(silouhetteBas/255)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2

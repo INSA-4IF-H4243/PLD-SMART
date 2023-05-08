@@ -142,6 +142,27 @@ class ImageProcessor:
                     new_img[i][j]=255
         
         return new_img
+    
+    def binarySilouhette(self,img,PixelSizeOutput):
+        """
+        Parameters
+        ----------
+        img : Image RGB
+            Input image
+        PixelSizeOutput: Int
+            size of the output image
+        Returns
+        ------
+            Silouhette in black and white with size PixelSizeOutput
+        """
+        no_bg_img = self.remove_background(img)
+        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+        inverted_img = cv2.bitwise_not(gray_img)
+        _, thresh2B = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
+        silouhette = self.crop_silouhette(thresh2B, PixelSizeOutput)
+        thresh = self.binary(silouhette)
+        
+        return(thresh)
         
     def save_img(self, img, path: str):
         """
