@@ -16,9 +16,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/cd_j1/cut3_AYd16B7O.mp4'#chemin de la video
-outPutPathJHaut='img/cd_j12/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/cd_j12/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='dataset/slice_rv_j1/cut3_dpSDa4ih.mp4'#chemin de la video
+outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -80,6 +80,7 @@ def englobant(rec1, rec2):
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
+imageProcessor = ImageProcessor()
 
 ret1, frame1 = cap.read()
 ret2, frame2 = cap.read()
@@ -198,7 +199,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
-        imageProcessor = ImageProcessor()
+
 
         #Jbas
         crop_img_basSil = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
@@ -248,41 +249,7 @@ cap.release()
 
 ###ENREGISTREMENT DONNEES:
 
-from numpy import save
-import os
-
-count=0
-outPutImBas=outPutPathJBas+'/images'
-if not os.path.exists(outPutPathJBas):
-            os.makedirs(outPutPathJBas)
-if not os.path.exists(outPutImBas):
-            os.makedirs(outPutImBas)
-
-for i in tableauSortieJBas:
-    count+=1
-    saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutImBas, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
-
-count=0
-outPutImHaut=outPutPathJHaut+'/images'
-if not os.path.exists(outPutPathJHaut):
-            os.makedirs(outPutPathJHaut)
-if not os.path.exists(outPutImHaut):
-            os.makedirs(outPutImHaut)
-
-for i in tableauSortieJHaut:
-    count+=1
-    saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
-    i=np.asmatrix(i)
-    i=i.astype(int)
-    np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
-    if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutImHaut, 'frame_{}.jpg'.format(count))
-         cv2.imwrite(saved_pathIm, i*255)
+imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
+imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
 
 print("fin")

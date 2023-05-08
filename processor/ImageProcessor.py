@@ -93,8 +93,11 @@ class ImageProcessor:
         ----------
         img : np.ndarray 3-dim
             Input image
+        Returns
+        ------
+        Image : np.ndarray 3-dim
+            silouhette image (grey)
         """
-       
         miny=len(img)
         maxy=0
         minx=len(img[0])
@@ -123,6 +126,15 @@ class ImageProcessor:
         return thresh
 
     def binary(self,image):
+        """
+        Parameters
+        ----------
+        img : greyImage 2 dim
+            Input image
+        Returns
+        ------
+        Image : black, and white if pixel !=0
+        """
         new_img=image
         for i in range(len(new_img)):
             for j in range(len(new_img[0])):
@@ -183,3 +195,33 @@ class ImageProcessor:
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
             cv2.imwrite(saved_path, thresh)
         return
+
+    def save_ImageList(self,imageList,outPutPath,toImageBool):
+        """
+        save a array of black and white image to 1 and 0 in csv
+
+        Parameters
+        ----------
+        imageList: List of matrix 2d
+            the list of image
+        outPutPath: string
+           folder
+        toImageBool: boolean
+            1 if you want to save the images in a /image folder, 0 if you just want the 1/0 csv
+        """      
+        count=0
+        outPutImBas=outPutPath+'/images'
+        if not os.path.exists(outPutPath):
+                    os.makedirs(outPutPath)
+        if toImageBool and not os.path.exists(outPutImBas):
+                    os.makedirs(outPutImBas)
+
+        for i in imageList:
+            count+=1
+            saved_path = os.path.join(outPutPath, 'frame_{}.csv'.format(count))
+            i=np.asmatrix(i)
+            i=i.astype(int)
+            np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
+            if(imageList):
+                saved_pathIm = os.path.join(outPutImBas, 'frame_{}.jpg'.format(count))
+                cv2.imwrite(saved_pathIm, i*255)
