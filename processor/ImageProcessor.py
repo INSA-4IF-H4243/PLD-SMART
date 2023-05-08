@@ -5,21 +5,6 @@ from ..video.Video import Video
 import os
 
 
-def estimate_noise(img):
-    """
-    Parameters
-    ----------
-    img : ndarray
-        Input image 3-dim
-
-    Returns
-    -------
-    float
-        Estimate of the noise standard deviation of the image
-    """
-    return estimate_sigma(img, average_sigmas=True, channel_axis=-1)
-
-
 class ImageProcessor:
     def __init__(self):
         pass
@@ -41,14 +26,16 @@ class ImageProcessor:
 
         # We bin the pixels. Result will be a value 1..5
         bins = np.array([0, 51, 102, 153, 204, 255])
-        input_img[:, :, :] = np.digitize(input_img[:, :, :], bins, right=True) * 51
+        input_img[:, :, :] = np.digitize(
+            input_img[:, :, :], bins, right=True) * 51
 
         # Create single channel greyscale for thresholding
         input_img_grey = cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY)
 
         # Perform Otsu thresholding and extract the background.
         # We use Binary Threshold as we want to create an all white background
-        ret, background = cv2.threshold(input_img_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        ret, background = cv2.threshold(
+            input_img_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # Convert black and white back into 3 channel greyscale
         background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
@@ -86,6 +73,65 @@ class ImageProcessor:
             Cropped image
         """
         return img[start_y:end_y, start_x:end_x]
+
+    def crop_silouhette(self, img, pixelSize):
+        """
+        Parameters
+        ----------
+        img : np.ndarray 2-dim
+            Input image
+        pixelSize : int
+            Size of the output image
+
+        Returns
+        -------
+        Image : np.ndarray 2-dim
+            Cropped image
+        """
+
+        miny = len(img)
+        maxy = 0
+        minx = len(img[0])
+        maxx = 0
+
+        for i in range(len(img)):
+            for j in range(len(img[0])):
+                if(img[i][j] != 0):
+                    if(i > maxy):
+                        maxy = i
+                    if(i < miny):
+                        miny = i
+                    if(j > maxx):
+                        maxx = j
+                    if(j < minx):
+                        minx = j
+
+        if(miny < maxy and maxx > minx):
+            img2 = self.crop_image(img, minx, maxx, miny, maxy)
+            img3 = cv2.resize(img2, (pixelSize, pixelSize))
+            img = img3
+        return img
+
+    def flouter_image(self, image):
+        imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(imgray, (5, 5), 4)
+        ret, thresh = cv2.threshold(imgray, 127, 255, cv2.THRESH_BINARY)
+        return thresh
+
+    def binary(self, image):
+        """
+        Parameters
+        ----------
+        image : np.ndarray 2-dim or 3-dim
+            Input image
+
+        Returns
+        -------
+        Image : np.ndarray 2-dim or 3-dim
+            Binary image
+        """
+        new_img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)
+        return new_img
 
     def save_img(self, img, path: str):
         """
@@ -131,11 +177,12 @@ class ImageProcessor:
             os.makedirs(folder_path)
         list_frames = video.frames[nb_start:nb_end]
         for i in range(nb_start, nb_end):
-            crop_img = self.crop_image(list_frames[i], start_x, end_x, start_y, end_y)
+            crop_img = self.crop_image(
+                list_frames[i], start_x, end_x, start_y, end_y)
             no_bg_img = self.remove_background(crop_img)
-            gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
-            inverted_img = cv2.bitwise_not(gray_img)
+            inverted_img = cv2.bitwise_not(no_bg_img)
             _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
+            final_img = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
-            cv2.imwrite(saved_path, thresh)
+            cv2.imwrite(saved_path, final_img)
         return

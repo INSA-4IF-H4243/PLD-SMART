@@ -1,4 +1,3 @@
-import PIL
 import cv2
 import numpy as np
 import os
@@ -7,7 +6,7 @@ class Image:
     def __init__(self, **kwargs):
         try:
             self.path = kwargs['path']
-            self.img = PIL.Image.open(self.path) # self.img array 3-dim
+            self.img = cv2.imread(self.path)
             self.img = np.array(self.img)
             self.width = self.img.shape[1]
             self.height = self.img.shape[0]
