@@ -1,13 +1,9 @@
 import cv2
-import numpy as np
-import random
 #!pip install .
-import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import ffmpeg
-ffmpeg.__path__
-from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
+from smart.processor import ImageProcessor
 from smart.video import Video, Image
 
 ########################PARAMETRES :
@@ -25,7 +21,6 @@ videoResize=(600,300)#taille pour resize de la video pour traitement (petite tai
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
-print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -75,8 +70,7 @@ def englobant(rec1, rec2):
 
 ########TRAITEMENT DE LA VIDEO
 
-#####LECTURE
-#cap = cv2.VideoCapture('rv_j1/cut6.mp4')
+#####LECTURE VIDEO
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
@@ -85,7 +79,6 @@ imageProcessor = ImageProcessor()
 ret1, frame1 = cap.read()
 ret2, frame2 = cap.read()
 ret3, frame3 = cap.read()
-
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame1,videoResize)
 milieu_y=int(len(frame1)/2)
@@ -98,7 +91,6 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 nbFrame=0
 print("...")
 while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
-    #print(frame3)
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
     frame2=cv2.resize(frame2,videoResize)
@@ -200,11 +192,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
 
-        crop_imgBas = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas=imageProcessor.binarySilouhette(crop_imgBas,PixelSizeOutput)
+        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
 
-        crop_imgHaut = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        silouhetteHaut=imageProcessor.binarySilouhette(crop_imgHaut,PixelSizeOutput)
+        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut, (PixelSizeOutput, PixelSizeOutput))
 
         ###AFFICHAGE 
         if(affichage):

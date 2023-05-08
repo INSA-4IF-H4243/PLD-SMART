@@ -74,43 +74,21 @@ class ImageProcessor:
         """
         return img[start_y:end_y, start_x:end_x]
 
-    def crop_silouhette(self, img, pixelSize):
+    def resize_img(self, img, new_shape: tuple, interpolation=cv2.INTER_AREA):
         """
         Parameters
         ----------
-        img : np.ndarray 2-dim
+        img : np.ndarray 3-dim
             Input image
-        pixelSize : int
-            Size of the output image
+        new_shape : tuple
+            New shape of the image
 
         Returns
         -------
-        Image : np.ndarray 2-dim
-            Cropped image
+        Image : np.ndarray 3-dim
+            Resized image
         """
-
-        miny = len(img)
-        maxy = 0
-        minx = len(img[0])
-        maxx = 0
-
-        for i in range(len(img)):
-            for j in range(len(img[0])):
-                if(img[i][j] != 0):
-                    if(i > maxy):
-                        maxy = i
-                    if(i < miny):
-                        miny = i
-                    if(j > maxx):
-                        maxx = j
-                    if(j < minx):
-                        minx = j
-
-        if(miny < maxy and maxx > minx):
-            img2 = self.crop_image(img, minx, maxx, miny, maxy)
-            img3 = cv2.resize(img2, (pixelSize, pixelSize))
-            img = img3
-        return img
+        return cv2.resize(img, new_shape, interpolation=interpolation)
     
     def flouter_image(self,image):
 
@@ -129,33 +107,8 @@ class ImageProcessor:
         ------
         Image : black, and white if pixel !=0
         """
-        new_img=image
-        for i in range(len(new_img)):
-            for j in range(len(new_img[0])):
-                if(new_img[i][j]!=0):
-                    new_img[i][j]=255
-        
+        _, new_img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)[1]
         return new_img
-    
-    def binarySilouhette(self,img,PixelSizeOutput):
-        """
-        Parameters
-        ----------
-        img : Image RGB
-            Input image
-        PixelSizeOutput: Int
-            size of the output image
-        Returns
-        ------
-            Silouhette in black and white with size PixelSizeOutput
-        """
-        no_bg_img = self.remove_background(img)
-        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
-        inverted_img = cv2.bitwise_not(gray_img)
-        _, thresh2B = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
-        silouhette = self.crop_silouhette(thresh2B, PixelSizeOutput)
-        thresh = self.binary(silouhette) 
-        return(thresh)
         
         
     def save_img(self, img, path: str):
@@ -170,7 +123,7 @@ class ImageProcessor:
         cv2.imwrite(path, img)
         return
 
-    def crop_shadow_player_save(self, video: Video, nb_start: int, nb_end: int,
+    def crop_all_shadows_player_save(self, video: Video, nb_start: int, nb_end: int,
                                 start_x: int, end_x: int,
                                 start_y: int, end_y: int,
                                 folder_path: str):
@@ -211,6 +164,36 @@ class ImageProcessor:
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
             cv2.imwrite(saved_path, final_img)
         return
+    
+    def crop_frame_shadow_player(self, frame, start_x, end_x, start_y, end_y):
+        """
+        Crop the shadow player from the video and save the cropped images to a folder
+
+        Parameters
+        ----------
+        frame: np.ndarray 3-dim
+            The frame to crop
+        start_x: int
+            The starting x coordinate of the cropped image
+        end_x: int
+            The ending x coordinate of the cropped image
+        start_y: int
+            The starting y coordinate of the cropped image
+        end_y: int
+            The ending y coordinate of the cropped image
+
+        Returns
+        -------
+        final_img: np.ndarray 2-dim
+            Cropped shadow image
+        """
+        crop_img = self.crop_image(
+                frame, start_x, end_x, start_y, end_y)
+        no_bg_img = self.remove_background(crop_img)
+        inverted_img = cv2.bitwise_not(no_bg_img)
+        _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
+        final_img = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
+        return final_img
 
     def save_ImageList(self,imageList,outPutPath,toImageBool):
         """
