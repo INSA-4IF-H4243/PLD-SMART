@@ -26,6 +26,7 @@ videoResize=(600,300)#taille pour resize de la video pour traitement (petite tai
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
+tableau_position_balle = []
 # print(tableauSortieJHaut)
 
 ########################METHODES TRAITEMENT CONTOURS :
@@ -100,10 +101,13 @@ milieu_x=int(len(frame1[0])/2)
 joueurs=[(milieu_x-25,milieu_y-100,50,50),(milieu_x-25,milieu_y+75,50,50)]
 balle = (milieu_x-25,milieu_y,50,50)
 balle_detecte = False
+rayon_detection = 500
+compteur_non_detection = 0
+limite = 5
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
+while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
 
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
@@ -213,10 +217,14 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
                 new_rec = englobant(rec1, rec2)
                 if new_rec != rec2 and new_rec != rec1:
                     ball_rec.remove(rec2)
-                    ball_rec.append(new_rec)
+                    if new_rec[2] < 20 :
+                        ball_rec.append(new_rec)
                     superpose = True
-        if superpose : 
-           if rec1 in ball_rec : ball_rec.remove(rec1)
+        if rec1 in ball_rec :
+            if superpose : 
+                ball_rec.remove(rec1)
+            elif rec1[2] > 20 :
+                ball_rec.remove(rec1)
 
     if devMode:
         for rec in ball_rec:
@@ -230,7 +238,7 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
 
     if balle_detecte:
         for rec in ball_rec :
-            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 7200 and distance2(balle,rec) > 10 :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 3000 and distance2(balle,rec) > 100 :
                 minBalle=rec  
                 bBalle = 1
         if bBalle : balle = minBalle
@@ -238,18 +246,29 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
 
     b = False
     if not balle_detecte:
-        for rec in ball_rec :
-            if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 7500) :
-                minBalle=rec  
-                bBalle = 1
-                b = True
-            elif not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 7000 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 7000)) :
-                minBalle=rec  
-                bBalle = 1
+        if compteur_non_detection != limite :
+            for rec in ball_rec :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 3000+rayon_detection*compteur_non_detection) :
+                    minBalle=rec  
+                    bBalle = 1
+                    b = True
+        else :
+            for rec in ball_rec :
+                if not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 7000 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 7000 and joueurs[1][1]+joueurs[1][3]+20 > rec[1])) :
+                    minBalle=rec  
+                    bBalle = 1
         
         if bBalle : 
             balle = minBalle
             balle_detecte = True
+            compteur_non_detection = 0
+            tableau_position_balle.append(centre(balle))
+            print(centre(balle))
+        else :
+            tableau_position_balle.append((-1,-1)) 
+            print((-1,-1))
+            if compteur_non_detection < limite :
+                compteur_non_detection+=1
     
     (x, y, w, h) = balle
     if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
