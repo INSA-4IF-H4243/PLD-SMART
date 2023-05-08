@@ -222,6 +222,24 @@ class ImageProcessor:
         return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
 
+    def resize_image(self, img, width=20, height=20):
+        """
+        Parameters
+        ----------
+        img : np.ndarray 3-dim
+            Image to resize
+        width : int
+            Width of the image
+        height : int
+            Height of the image
+
+        Returns
+        -------
+        Image : np.ndarray 3-dim
+            Resized image
+        """
+        return cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+
 '''
 def remove_background_old(image):
     # Thresholding the image
