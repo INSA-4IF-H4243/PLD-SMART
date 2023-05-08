@@ -13,7 +13,7 @@ from smart.video import Video, Image
 
 ########################PARAMETRES :
 
-devMode=True#mode Développeur (=voir les tous les contours, filtres...)
+devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
@@ -218,25 +218,48 @@ while cap.isOpened() :#and not ret3:#attention video qui s'arete au premier prob
         if superpose : 
            if rec1 in ball_rec : ball_rec.remove(rec1)
 
+    if devMode:
+        for rec in ball_rec:
+            (x, y, w, h) = rec
+            cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
     # Trouver la balle
 
     minBalle = (1000000, 1000000, 1000000, 1000000, 1000000)
     bBalle = 0
-    for rec in ball_rec :
-        if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 1000 and balle_detecte:
-            minBalle=rec  
-            bBalle = 1
-    if bBalle : balle = minBalle
+
+    if balle_detecte:
+        for rec in ball_rec :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 7200 and distance2(balle,rec) > 10 :
+                minBalle=rec  
+                bBalle = 1
+        if bBalle : balle = minBalle
+        else : balle_detecte = False
+
+    b = False
+    if not balle_detecte:
+        for rec in ball_rec :
+            if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 7500) :
+                minBalle=rec  
+                bBalle = 1
+                b = True
+            elif not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 7000 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 7000)) :
+                minBalle=rec  
+                bBalle = 1
+        
+        if bBalle : 
+            balle = minBalle
+            balle_detecte = True
     
     (x, y, w, h) = balle
-    cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
+    if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
 
     # ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps==0):
 
         ###CREATION CONTOUR AVEC DECALAGE
-        decalageX = int(milieu_x/30)
-        decalageY = int(milieu_y/15)
+        decalageX = int(milieu_x/50)
+        decalageY = int(milieu_y/25)
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
         affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
