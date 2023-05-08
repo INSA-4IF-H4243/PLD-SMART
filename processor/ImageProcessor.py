@@ -1,7 +1,11 @@
+import os
+
 from rembg import remove, new_session
 from skimage.restoration import estimate_sigma
 import cv2
 import numpy as np
+
+from video import Video
 
 
 def estimate_noise(img):
@@ -221,7 +225,6 @@ class ImageProcessor:
         """
         return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-
     def resize_image(self, img, width=20, height=20):
         """
         Parameters
@@ -239,6 +242,49 @@ class ImageProcessor:
             Resized image
         """
         return cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+
+    def crop_shadow_player_save(self, video: Video, nb_start: int, nb_end: int,
+                                start_x: int, end_x: int,
+                                start_y: int, end_y: int,
+                                folder_path: str):
+        """
+        Crop the shadow player from the video and save the cropped images to a folder
+
+        Parameters
+        ----------
+        video: Video
+            The video to crop
+        nb_start: int
+            The number of the first frame to be cropped
+        nb_end: int
+            The number of the last frame to be cropped
+        start_x: int
+            The starting x coordinate of the cropped image
+        end_x: int
+            The ending x coordinate of the cropped image
+        start_y: int
+            The starting y coordinate of the cropped image
+        end_y: int
+            The ending y coordinate of the cropped image
+        folder_path: str
+            The path to the folder where the shadow images will be saved
+        threshold: float
+            The threshold to remove the background
+        """
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        list_frames = video.frames[nb_start:nb_end]
+        for i in range(nb_start, nb_end):
+            crop_img = self.crop_image(
+                list_frames[i], start_x, end_x, start_y, end_y)
+            no_bg_img = self.remove_background(crop_img)
+            inverted_img = cv2.bitwise_not(no_bg_img)
+            _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
+            final_img = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
+            saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
+            cv2.imwrite(saved_path, final_img)
+        return
+
 
 '''
 def remove_background_old(image):
