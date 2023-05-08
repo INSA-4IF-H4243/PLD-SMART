@@ -16,9 +16,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/v.mp4'#chemin de la video
-outPutPathJHaut='img/cd_j1/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/cd_j1/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='dataset/cd_j1/cut3_AYd16B7O.mp4'#chemin de la video
+outPutPathJHaut='img/cd_j12/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='img/cd_j12/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
@@ -95,8 +95,9 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
-while cap.isOpened() and not ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
-
+print("...")
+while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
+    #print(frame3)
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
     frame2=cv2.resize(frame2,videoResize)
@@ -181,16 +182,15 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
             joueurs[1] = minJoueur1
 
     ###DESSIN DU CONTOUR DES JOUEURS
-    if(nbFrame%rapportFps==0):
+    if(nbFrame%rapportFps<1):
 
         ###CREATION CONTOUR AVEC DECALAGE
         decalageX = int(milieu_x/30)
         decalageY = int(milieu_y/15)
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
-        affichageJHaut=(x-decalageX, y-decalageY, w+2*decalageX, h+2*decalageY)
+        affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
         cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
-        
         (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
         cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
@@ -200,22 +200,27 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
         (x1, y1, w1, h1) = affichageJBas
         imageProcessor = ImageProcessor()
 
-        #crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        #gray_crop_img = cv2.cvtColor(crop_img_basSil, cv2.COLOR_BGR2GRAY)
-        #no_bg_img = imageProcessor.remove_background(gray_crop_img, 0.5, "RGB")
-        #_, thresh = cv2.threshold(no_bg_img, 0, 255, cv2.THRESH_BINARY)
-            
-        #saved_path = os.path.join("folder_path", 'frame_{}.jpg'.format(i))
-        #cv2.imshow("JoueurHaut", silouhette_bas)
-        #cv2.imshow("JoueurHautSil", thresh)
+        #Jbas
+        crop_img_basSil = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
+        no_bg_img = imageProcessor.remove_background(crop_img_basSil)
+        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+        inverted_img = cv2.bitwise_not(gray_img)
+        _, thresh2B = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
 
-        crop_img_haut = imageProcessor.crop_image(dilated, x, x+w, y, y+h)
-        silouhette_haut=imageProcessor.crop_silouhette(crop_img_haut, PixelSizeOutput)
+        silouhette_bas = imageProcessor.crop_silouhette(thresh2B, PixelSizeOutput)
+        thresh_bas = imageProcessor.binary(silouhette_bas)
+
+        #JHaut
+        crop_img_basSil = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
+        no_bg_img = imageProcessor.remove_background(crop_img_basSil)
+        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+        inverted_img = cv2.bitwise_not(gray_img)
+        _, thresh2H = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
+
+        silouhette_haut=imageProcessor.crop_silouhette(thresh2H, PixelSizeOutput)
         thresh_haut = imageProcessor.binary(silouhette_haut)
 
-        crop_img_bas = imageProcessor.crop_image(dilated, x1, x1+w1, y1, y1+h1)
-        silouhette_bas = imageProcessor.crop_silouhette(crop_img_bas, PixelSizeOutput)
-        thresh_bas = imageProcessor.binary(silouhette_bas)
+
         ###AFFICHAGE 
         if(affichage):
 
@@ -238,15 +243,21 @@ while cap.isOpened() and not ret3:#attention video qui s'arete au premier proble
     if cv2.waitKey(40) == 27:
         break
 
+cv2.destroyAllWindows()
+cap.release()
+
 ###ENREGISTREMENT DONNEES:
 
 from numpy import save
 import os
 
 count=0
-
+outPutImBas=outPutPathJBas+'/images'
 if not os.path.exists(outPutPathJBas):
             os.makedirs(outPutPathJBas)
+if not os.path.exists(outPutImBas):
+            os.makedirs(outPutImBas)
+
 for i in tableauSortieJBas:
     count+=1
     saved_path = os.path.join(outPutPathJBas, 'frame_{}.csv'.format(count))
@@ -254,13 +265,16 @@ for i in tableauSortieJBas:
     i=i.astype(int)
     np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
     if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJBas, 'frame_{}.jpg'.format(count))
+         saved_pathIm = os.path.join(outPutImBas, 'frame_{}.jpg'.format(count))
          cv2.imwrite(saved_pathIm, i*255)
 
 count=0
-
+outPutImHaut=outPutPathJHaut+'/images'
 if not os.path.exists(outPutPathJHaut):
             os.makedirs(outPutPathJHaut)
+if not os.path.exists(outPutImHaut):
+            os.makedirs(outPutImHaut)
+
 for i in tableauSortieJHaut:
     count+=1
     saved_path = os.path.join(outPutPathJHaut, 'frame_{}.csv'.format(count))
@@ -268,8 +282,7 @@ for i in tableauSortieJHaut:
     i=i.astype(int)
     np.savetxt(saved_path, i,fmt='%d', delimiter=" ")
     if(enregistrementImage):
-         saved_pathIm = os.path.join(outPutPathJHaut, 'frame_{}.jpg'.format(count))
+         saved_pathIm = os.path.join(outPutImHaut, 'frame_{}.jpg'.format(count))
          cv2.imwrite(saved_pathIm, i*255)
 
-cv2.destroyAllWindows()
-cap.release()
+print("fin")
