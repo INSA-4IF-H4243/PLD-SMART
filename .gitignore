@@ -5,7 +5,7 @@ build/
 smart.egg-info/
 Video/__pycache__/
 Processor/__pycache__/
-
+datasetVideos/
 img/*
 image_input/*
 
