@@ -24,25 +24,13 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 
 tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
-
+k_pressed=False
 def on_press(key):
         ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
-    #print(key)
     if key==keyboard.Key.space:
 
-            print("dernier coup du joueur en haut:")
-            for i in range(len(tabCoups)):
-                print(i," : ",tabCoups[i])
-            coupJHaut=int(input())
-
-            print("dernier coup du joueur en bas:")
-            for i in range(len(tabCoups)):
-                print(i," : ",tabCoups[i])
-            coupJBas=int(input())
-
-            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            print("\nséquence enregistrée, reprise...\n")
+        global k_pressed
+        k_pressed=True
 
 from pynput import keyboard
 key_listener = keyboard.Listener(on_press=on_press)
@@ -229,13 +217,29 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
 
         ###AFFICHAGE 
-        if(affichage):
+        
+        cv2.imshow("feed", frame1)
+        if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("feed", frame1)
-            if(devMode):cv2.imshow("feed2", dilated)
+        cv2.imshow("JoueurHaut", silouhetteHaut)
+        cv2.imshow("JoueurBas", silouhetteBas)
 
-            cv2.imshow("JoueurHaut", silouhetteHaut)
-            cv2.imshow("JoueurBas", silouhetteBas)
+        ##ENREGISTREMENT
+        if(k_pressed==True):
+            print("dernier coup du joueur en haut:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJHaut=int(input())
+
+            print("dernier coup du joueur en bas:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJBas=int(input())
+
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            print("\nséquence enregistrée, reprise...\n")
+            k_pressed=False
 
         ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
