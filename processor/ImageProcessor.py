@@ -1,4 +1,3 @@
-from skimage.restoration import estimate_sigma
 import cv2
 import numpy as np
 from ..video.Video import Video
@@ -222,3 +221,34 @@ class ImageProcessor:
             if(imageList):
                 saved_pathIm = os.path.join(outPutImBas, 'frame_{}.jpg'.format(count))
                 cv2.imwrite(saved_pathIm, i*255)
+
+    def crop_silouhette(self, img, pixelSize):
+        """
+        Parameters
+        ----------
+        img : np.ndarray 3-dim
+            Input image
+        Returns
+        ------
+        Image : np.ndarray 3-dim
+            silouhette image (grey)
+        """
+        miny=len(img)
+        maxy=0
+        minx=len(img[0])
+        maxx=0
+
+        for i in range(len(img)):
+            for j in range(len(img[0])):
+                if(img[i][j]!=0):
+                    if(i>maxy):maxy=i
+                    if(i<miny):miny=i
+
+                    if(j>maxx):maxx=j
+                    if(j<minx):minx=j
+
+        if(miny<maxy and maxx>minx):
+            img2=self.crop_image(img,minx, maxx,miny,maxy)
+            img3=cv2.resize(img2,(pixelSize,pixelSize))
+            img=img3
+        return img
