@@ -2,22 +2,16 @@ import cv2
 #!pip install .
 import cv2
 import numpy as np
-<<<<<<< HEAD
-import ffmpeg
-ffmpeg.__path__
-from smart.processor import ImageProcessor, VideoProcessor
-=======
 from smart.processor import ImageProcessor
->>>>>>> master
 from smart.video import Video, Image
-
+from pynput.keyboard import Key, Listener
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideosCourtes/v.mp4'#chemin de la video
+videoPath='datasetVideos/OP1.mp4'#chemin de la video
 outPutPathJHaut='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
@@ -31,26 +25,27 @@ tableauSortieJBas=[]
 
 tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
 
-########################TRAINING:
+def on_press(key):
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+    #print(key)
+    if key==keyboard.Key.space:
+
+            print("dernier coup du joueur en haut:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJHaut=int(input())
+
+            print("dernier coup du joueur en bas:")
+            for i in range(len(tabCoups)):
+                print(i," : ",tabCoups[i])
+            coupJBas=int(input())
+
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
 
 from pynput import keyboard
-
-def on_press(key):
-    if key == keyboard.Key.esc:
-        return False  # stop listener
-    try:
-        k = key.char  # single-char keys
-    except:
-        k = key.name  # other keys
-    if k in ['space']:  # keys of interest
-        # self.keys.append(k)  # store it in global-like variable
-        print('Key pressed: ' + k)
-        return False  # stop listener; remove this if want more keys
-
-listener = keyboard.Listener(on_press=on_press)
-listener.start()  # start to listen on a separate thread
-listener.join()  # remove if main thread is polling self.keys
-
+key_listener = keyboard.Listener(on_press=on_press)
+key_listener.start()
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -228,16 +223,9 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
         silouhetteBas=imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
-<<<<<<< HEAD
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
         silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
-
-=======
-
-        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
->>>>>>> master
 
         ###AFFICHAGE 
         if(affichage):
@@ -252,24 +240,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
 
-        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
-        if countSave%cutFrameNB==0:
 
-            print("dernier coup du joueur en haut:")
-            for i in range(len(tabCoups)):
-                print(i," : ",tabCoups[i])
-            coupJHaut=int(input())
-
-            print("dernier coup du joueur en bas:")
-            for i in range(len(tabCoups)):
-                print(i," : ",tabCoups[i])
-            coupJBas=int(input())
-
-            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut,outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas,outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-
-            tableauSortieJHaut=[]
-            tableauSortieJBas=[]
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2

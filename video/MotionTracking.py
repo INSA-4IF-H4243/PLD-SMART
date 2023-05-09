@@ -3,12 +3,9 @@ import cv2
 import cv2
 import numpy as np
 import ffmpeg
-<<<<<<< HEAD
+from smart.processor import ImageProcessor
 ffmpeg.__path__
 from smart.processor import ImageProcessor, VideoProcessor
-=======
-from smart.processor import ImageProcessor
->>>>>>> master
 from smart.video import Video, Image
 
 ########################PARAMETRES :
@@ -17,7 +14,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/service_j2/cut3_sJEWRBgM.mp4'#chemin de la video
+videoPath='datasetVideos/OP1.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
@@ -198,17 +195,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x1, y1, w1, h1) = affichageJBas
 
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-<<<<<<< HEAD
+        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
+        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
         silouhetteBas=imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
-=======
-        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
-
-        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
         silouhetteHaut = imageProcessor.resize_img(crop_imgHaut, (PixelSizeOutput, PixelSizeOutput))
->>>>>>> master
+        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
 
         ###AFFICHAGE 
         if(affichage):
