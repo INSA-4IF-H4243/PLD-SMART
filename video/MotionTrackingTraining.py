@@ -5,13 +5,14 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
 from pynput.keyboard import Key, Listener
+from pynput import keyboard
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
+videoPath='datasetVideosCourtes/v.mp4'#chemin de la video
 outPutPathJHaut='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
@@ -32,7 +33,6 @@ def on_press(key):
         global k_pressed
         k_pressed=True
 
-from pynput import keyboard
 key_listener = keyboard.Listener(on_press=on_press)
 key_listener.start()
 ########################METHODES TRAITEMENT CONTOURS :
@@ -211,10 +211,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x1, y1, w1, h1) = affichageJBas
 
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
+        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
+        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
 
         ###AFFICHAGE 
         
