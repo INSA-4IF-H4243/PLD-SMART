@@ -107,7 +107,7 @@ class ImageProcessor:
         ------
         Image : black, and white if pixel !=0
         """
-        _, new_img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)[1]
+        _, new_img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)
         return new_img
         
         

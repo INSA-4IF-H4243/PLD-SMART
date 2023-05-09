@@ -1,5 +1,7 @@
 read_img.py
 test_ffmpeg.py
+delete_null_img.py
+extract_frame.py
 
 build/
 smart.egg-info/
