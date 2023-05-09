@@ -7,6 +7,9 @@ from smart.processor import ImageProcessor
 from smart.video import Video, Image
 
 ########################PARAMETRES :
+HAUT_VERS_BAS = 1
+BAS_VERS_HAUT = 0
+PAS_MOUVEMENT_BALLE = -1
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
@@ -21,6 +24,8 @@ videoResize=(600,300)#taille pour resize de la video pour traitement (petite tai
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
+tableau_position_balle = []
+tableau_trajectoire_balle = []
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -41,6 +46,10 @@ def distance2(rec1,rec2):
     distance = (centre(rec1)[0]-centre(rec2)[0])*(centre(rec1)[0]-centre(rec2)[0]) + (centre(rec1)[1]-centre(rec2)[1])*(centre(rec1)[1]-centre(rec2)[1])
     return distance
 
+def distance_point(p1,p2):
+    distance = (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1])
+    return distance
+
 def contour_taille(rec):
     contour=rec[2]*2+rec[3]*2
     return contour
@@ -49,7 +58,7 @@ def superposition(rec1, rec2):
     prox = -15
     dx = min(rec1[0]+rec1[2], rec2[0]+rec2[2]) - max(rec1[0], rec2[0])
     dy = min(rec1[1]+rec1[3], rec2[1]+rec2[3]) - max(rec1[1], rec2[1])
-    if (dx >= prox and dy >= prox) : 
+    if (dx >= prox and dy >= prox) or englobe(rec1, rec2): 
         return True
     else :
         return False
@@ -61,10 +70,15 @@ def englobant(rec1, rec2):
     y2 = max(rec1[1]+rec1[3], rec2[1]+rec2[3])
     w = x2-x1
     h = y2-y1
-    if h < 150 and w < 50:
+    if (h < 150 and w < 50) or englobe(rec1, rec2):
         rec3 = (x1,y1,w,h)
         return rec3
     return rec1
+
+def englobe(rec1, rec2) : 
+    if (rec1[0] <= (rec2[0]+10) and rec1[1] <= (rec2[1]+10) and (rec1[0]+rec1[2]) >= (rec2[0]+rec2[2]-10) and (rec1[1]+rec1[3]) >= (rec2[1]+rec2[3]-10) ) or (rec2[0] <= (rec1[0]+10) and rec2[1] <= (rec1[1]+10) and (rec2[0]+rec2[2]) >= (rec1[0]+rec1[2]-10) and (rec2[1]+rec2[3]) >= (rec1[1]+rec1[3]-10) ):
+        return True
+    return False
 
 ########################
 
@@ -86,6 +100,13 @@ milieu_x=int(len(frame1[0])/2)
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
 joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
+balle = (milieu_x-25,milieu_y,50,50)
+pos_balle = centre(balle)
+pos_precedent = pos_balle
+balle_detecte = False
+rayon_detection = 500
+compteur_non_detection = 0
+limite = 5
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
@@ -113,6 +134,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     
     ###PREMIERE DISCRIMINATION DES CONTOURS
     tab_rec = []    #contient les contours (contour=(x,y,w,h))
+    ball_rec = []   #contient un tableau de contours qui va servire pour la balle
     for contour in contours:
 
         rec_base = cv2.boundingRect(contour)
@@ -121,20 +143,38 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
+
         if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
-        if( contour_taille(rec_base)<100 or contour_taille(rec_base)>1000):continue
+        
+        if(contour_taille(rec_base)>1000):continue
+
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
+        ball_rec.append(new_rec)
+
         #fusion des contours proches
-        for rec in tab_rec[:]:         
-            up_low_rec = rec[1] < milieu_y*2/3
-            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
-                new_rec = englobant(rec_base, rec)
-                if new_rec != rec_base:
-                    tab_rec.remove(rec)
-        tab_rec.append(new_rec)
+        if(contour_taille(rec_base)<100):
+            for rec in ball_rec[:]:         
+                up_low_rec = rec[1] < milieu_y*2/3
+                if superposition(rec_base, rec):
+                    new_rec = englobant(rec_base, rec)
+                    if new_rec != rec_base:
+                        ball_rec.remove(rec)
+            ball_rec.append(new_rec)
+        else :
+            for rec in tab_rec[:]:         
+                up_low_rec = rec[1] < milieu_y*2/3
+                if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
+                    new_rec = englobant(rec_base, rec)
+                    if new_rec != rec_base:
+                        tab_rec.remove(rec)
+                        if rec in ball_rec : ball_rec.remove(rec)
+            tab_rec.append(new_rec)
+            if new_rec in ball_rec : 
+                if new_rec[2]>30 or new_rec[3]>75 : ball_rec.remove(new_rec)
+                else : ball_rec.append(new_rec)
 
     ###AFFICHAGE DE TOUS LES CONTOURS
     if devMode:
@@ -174,6 +214,77 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         if b1:
             joueurs[1] = minJoueur1
 
+    for rec1 in joueurs:
+        for rec2 in ball_rec[:] :
+            if englobe(rec1, rec2): 
+                ball_rec.remove(rec2)
+
+    # Trouver la balle
+
+    minBalle = (1000000, 1000000, 1000000, 1000000, 1000000)
+    bBalle = 0
+    compteur = 0
+
+    if balle_detecte:
+        for rec in ball_rec :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 3000 and distance2(balle,rec) > 100 :
+                minBalle=rec  
+                bBalle = 1
+        if bBalle : balle = minBalle
+        else : balle_detecte = False
+
+    b = False
+    if not balle_detecte:
+        if compteur_non_detection < limite :
+            for rec in ball_rec :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 3000+rayon_detection*compteur_non_detection) :
+                    minBalle=rec  
+                    bBalle = 1
+                    b = True
+        else :
+            for rec in ball_rec :
+                if not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 6000 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 6000 and joueurs[1][1]+joueurs[1][3]+20 > rec[1])) :
+                    minBalle=rec  
+                    bBalle = 1
+        
+        if bBalle : 
+            balle = minBalle
+            balle_detecte = True
+            compteur_non_detection = 0
+            pos_balle = centre(balle)
+            tableau_trajectoire_balle.append(pos_balle)
+            derniere_position_balle = pos_balle
+            #print(centre(balle))
+        else :
+            tableau_trajectoire_balle.append((-1,-1))
+            compteur_non_detection+=1
+            #print((-1,-1))
+
+        if compteur_non_detection > 6 and derniere_position_balle[1] > 10 :
+            if len(tableau_trajectoire_balle) > 10 :                
+                tableau_position_balle.append(tableau_trajectoire_balle)
+                print(tableau_trajectoire_balle)
+            tableau_trajectoire_balle.clear()
+            compteur = 0
+        else :
+            if bBalle :
+                distance = distance_point(pos_precedent, pos_balle)
+                print(distance)
+                if (distance > 50000 + compteur*1000) :
+                    tableau_trajectoire_balle.clear()
+                    compteur = 0
+                else :
+                    compteur+=1
+                    pos_precedent = pos_balle
+                        
+
+
+        
+    
+    (x, y, w, h) = balle
+    if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
+
+
     ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps<1):
 
@@ -189,14 +300,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
         ###RECUPERATION SILOUHETTE 
-        (x, y, w, h) = affichageJHaut
-        (x1, y1, w1, h1) = affichageJBas
+        # (x, y, w, h) = affichageJHaut
+        # (x1, y1, w1, h1) = affichageJBas
 
-        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
+        # crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+        # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
 
-        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut, (PixelSizeOutput, PixelSizeOutput))
+        # crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+        # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut, (PixelSizeOutput, PixelSizeOutput))
 
         ###AFFICHAGE 
         if(affichage):
@@ -204,12 +315,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             cv2.imshow("feed", frame1)
             if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("JoueurHaut", silouhetteHaut)
-            cv2.imshow("JoueurBas", silouhetteBas)
+        #     cv2.imshow("JoueurHaut", silouhetteHaut)
+        #     cv2.imshow("JoueurBas", silouhetteBas)
 
-        ###ENREGISTREMENT des silouhettes dans le TABLEAU
-        tableauSortieJHaut.append(silouhetteHaut/255)
-        tableauSortieJBas.append(silouhetteBas/255)
+        # ###ENREGISTREMENT des silouhettes dans le TABLEAU
+        # tableauSortieJHaut.append(silouhetteHaut/255)
+        # tableauSortieJBas.append(silouhetteBas/255)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
