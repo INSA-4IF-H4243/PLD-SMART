@@ -38,12 +38,15 @@ def draw_lines(img, lines, trasnfo):
         x1, y1, x2, y2 = line[0][0], line[0][1], line[1][0], line[1][1]
         cv2.line (img, (x1+transfo[0], y1+transfo[1]), (x2+transfo[0], y2+transfo[1]), (0, 255, 0), 2)
     return img
+    
+def weird_division(n, d):
+    return n / d if d else (0,0)
 
 def perspective_transform(pt: list, matrix: 'np.array'):
     pt.append(1) # [x, y, 1]
     pt_arr = np.asarray(pt) # np.array([x, y, 1])
     pt_transformed = np.dot(matrix, pt_arr) # p' = H.p
-    pt_transformed = pt_transformed / pt_transformed[2] # p' = np.array([x', y', 1])
+    pt_transformed = weird_division(pt_transformed, pt_transformed[2]) # p' = np.array([x', y', 1])
     return (round(pt_transformed[0]), round(pt_transformed[1]))
 
 def transform_lines(lines: list, matrix: 'np.array'):
@@ -63,14 +66,14 @@ def mse(img1, img2):
    mse = err/(float(h*w))
    return mse
 
-input_video = cv2.VideoCapture('input/clip_problems2.mp4')
+input_video = cv2.VideoCapture('input/clip_long.mp4')
 
 width = 1200
 height = 600
 
 fps = int(input_video.get(cv2.CAP_PROP_FPS))
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-output_video = cv2.VideoWriter('output/clip_problems2.mp4', fourcc, fps, (width, height))
+output_video = cv2.VideoWriter('output/clip_long.mp4', fourcc, fps, (width, height))
 
 court_ref = CourtReference()
 
@@ -84,7 +87,7 @@ while input_video.isOpened():
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         error = mse(gray_frame, gray_comp)
 
-        if(error <= 15):
+        if(error <= 20):
             transfo = [round(0.15*width), round(0.2*height), round(0.6*height), round(0.7*width)] #x, y, h, w
             court = frame[transfo[1]:transfo[1]+transfo[2],transfo[0]:transfo[0]+transfo[3]]
 
@@ -110,8 +113,6 @@ while input_video.isOpened():
 
     if (cv2.waitKey(1) & 0xFF) == ord('q'):
         break
-
-  
-test1 = draw_lines(frame, transformed_lines, transfo) 
+ 
 cv2.destroyAllWindows()
 input_video.release()
