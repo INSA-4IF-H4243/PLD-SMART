@@ -12,7 +12,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideosCourtes/v.mp4'#chemin de la video
+videoPath='datasetVideos/OP1.mp4'#chemin de la video
 outPutPathJHaut='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
@@ -236,8 +236,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabCoups[i])
             coupJBas=int(input())
 
-            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
             print("\nséquence enregistrée, reprise...\n")
             k_pressed=False
 
