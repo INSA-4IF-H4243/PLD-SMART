@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
-
+from pynput.keyboard import Key, Listener
+from pynput import keyboard
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
@@ -24,6 +25,16 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 
 tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
+k_pressed=False
+def on_press(key):
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+    if key==keyboard.Key.space:
+
+        global k_pressed
+        k_pressed=True
+
+key_listener = keyboard.Listener(on_press=on_press)
+key_listener.start()
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -206,21 +217,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
 
         ###AFFICHAGE 
-        if(affichage):
+        
+        cv2.imshow("feed", frame1)
+        if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("feed", frame1)
-            if(devMode):cv2.imshow("feed2", dilated)
+        cv2.imshow("JoueurHaut", silouhetteHaut)
+        cv2.imshow("JoueurBas", silouhetteBas)
 
-            cv2.imshow("JoueurHaut", silouhetteHaut)
-            cv2.imshow("JoueurBas", silouhetteBas)
-
-        ###ENREGISTREMENT des silouhettes dans le TABLEAU
-        tableauSortieJHaut.append(silouhetteHaut/255)
-        tableauSortieJBas.append(silouhetteBas/255)
-
-        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
-        if countSave%cutFrameNB==0:
-
+        ##ENREGISTREMENT
+        if(k_pressed==True):
             print("dernier coup du joueur en haut:")
             for i in range(len(tabCoups)):
                 print(i," : ",tabCoups[i])
@@ -231,11 +236,16 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabCoups[i])
             coupJBas=int(input())
 
-            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut,outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas,outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            print("\nséquence enregistrée, reprise...\n")
+            k_pressed=False
 
-            tableauSortieJHaut=[]
-            tableauSortieJBas=[]
+        ###ENREGISTREMENT des silouhettes dans le TABLEAU
+        tableauSortieJHaut.append(silouhetteHaut/255)
+        tableauSortieJBas.append(silouhetteBas/255)
+
+
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
