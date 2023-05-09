@@ -206,10 +206,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x1, y1, w1, h1) = affichageJBas
 
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas=imageProcessor.resize_img(crop_imgBas,(PixelSizeOutput, PixelSizeOutput))
+        silouhetteBas=imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut=imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
+        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
 
 
         ###AFFICHAGE 
