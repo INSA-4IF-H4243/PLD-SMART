@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import ffmpeg
 ffmpeg.__path__
-from smart.processor import ImageProcessor, VideoProcessor, estimate_noise
+from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 
 ########################PARAMETRES :
@@ -205,11 +205,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
 
-        crop_imgBas = imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas=imageProcessor.binarySilouhette(crop_imgBas,PixelSizeOutput)
+        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+        silouhetteBas=imageProcessor.resize_img(crop_imgBas,(PixelSizeOutput, PixelSizeOutput))
 
-        crop_imgHaut = imageProcessor.crop_image(frame1, x, x+w, y, y+h)
-        silouhetteHaut=imageProcessor.binarySilouhette(crop_imgHaut,PixelSizeOutput)
+        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+        silouhetteHaut=imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
+
 
         ###AFFICHAGE 
         if(affichage):
