@@ -1,8 +1,6 @@
 import cv2
 #!pip install .
 import cv2
-import numpy as np
-import ffmpeg
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
 
@@ -12,7 +10,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideosCourtes/v.mp4'#chemin de la video
+videoPath='clip_usopen.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
@@ -173,7 +171,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             joueurs[0] = minJoueur0
         if b1:
             joueurs[1] = minJoueur1
-
+    
     ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps<1):
 
@@ -191,8 +189,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
-
+        
+        
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+        cv2.imwrite(f"img/b/frame{nbFrame}.jpg", crop_imgBas)
         silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
