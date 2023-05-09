@@ -7,7 +7,16 @@ import os
 class ImageProcessor:
     def __init__(self):
         pass
-
+    def filtre_green_blue(self, input_img):
+        new_img=np.array(input_img)
+        for i in range(new_img.shape[0]):
+              for j in range(new_img.shape[1]):
+                    if new_img[i,j][0]>100 and new_img[i,j][2]<150:
+                        new_img[i,j]=[0,0,0]
+                    elif new_img[i,j][1]>100 and new_img[i,j][2]<150:
+                        new_img[i,j]=[0,0,0]
+        return  new_img
+    
     def remove_background(self, input_img):
         """
         Parameters
@@ -184,9 +193,9 @@ class ImageProcessor:
         final_img: np.ndarray 2-dim
             Cropped shadow image
         """
-        crop_img = self.crop_image(frame, 
-                                       start_x, end_x, start_y, end_y)
-        no_bg_img = self.remove_background(crop_img)
+        crop_img = self.crop_image(frame, start_x, end_x, start_y, end_y)
+        filter_img=self.filtre_green_blue(crop_img)                               
+        no_bg_img = self.remove_background(filter_img)
         gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
         inverted_img = cv2.bitwise_not(gray_img)
         _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY_INV)
