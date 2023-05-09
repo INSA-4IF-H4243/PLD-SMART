@@ -260,26 +260,34 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             compteur_non_detection+=1
             #print((-1,-1))
 
-        if compteur_non_detection > 6 and derniere_position_balle[1] > 10 :
-            if len(tableau_trajectoire_balle) > 10 :                
-                tableau_position_balle.append(tableau_trajectoire_balle)
-                print(tableau_trajectoire_balle)
-            tableau_trajectoire_balle.clear()
-            compteur = 0
-        else :
-            if bBalle :
-                distance = distance_point(pos_precedent, pos_balle)
-                print(distance)
-                if (distance > 50000 + compteur*1000) :
-                    tableau_trajectoire_balle.clear()
-                    compteur = 0
-                else :
-                    compteur+=1
-                    pos_precedent = pos_balle
+    #gerer les trajectoires
+
+    if compteur_non_detection > 6 and derniere_position_balle[1] > 10 :
+        if len(tableau_trajectoire_balle) > 10 :                
+            tableau_position_balle.append(tableau_trajectoire_balle)
+            frameX = frame1
+            print(tableau_trajectoire_balle)
+        tableau_trajectoire_balle.clear()
+        compteur = 0
+    else :
+        if bBalle :
+            distance = distance_point(pos_precedent, pos_balle)
+            print(distance)
+            if (distance > 50000 + compteur*1000) :
+                tableau_trajectoire_balle.clear()
+                compteur = 0
+            else :
+                compteur+=1
+                pos_precedent = pos_balle
                         
 
 
-        
+    
+    if len(tableau_position_balle) != 0 :
+        for pos in tableau_position_balle[-1] :
+            if pos[0] == -1 and pos[1] == -1 : continue
+            cv2.circle(frameX, (int(pos[0]), int(pos[1])), 1, (255, 255, 0), 2)
+        cv2.imshow("trajectoire balle", frameX)   
     
     (x, y, w, h) = balle
     if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
