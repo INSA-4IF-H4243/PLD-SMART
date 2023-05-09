@@ -8,6 +8,17 @@ class ImageProcessor:
     def __init__(self):
         pass
     def filtre_green_blue(self, input_img):
+        """
+        Parameters
+        ----------
+        input_img : np.ndarray 3-dim
+            Input image
+
+        Returns
+        -------
+        np.ndarray 3-dim
+            Image with background removed
+        """
         new_img=np.array(input_img)
         for i in range(new_img.shape[0]):
               for j in range(new_img.shape[1]):
@@ -188,7 +199,7 @@ class ImageProcessor:
         end_y: int
             The ending y coordinate of the cropped image
 
-        Returns
+        Returnszs
         -------
         final_img: np.ndarray 2-dim
             Cropped shadow image
