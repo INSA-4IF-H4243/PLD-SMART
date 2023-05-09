@@ -26,16 +26,14 @@ class ImageProcessor:
 
         # We bin the pixels. Result will be a value 1..5
         bins = np.array([0, 51, 102, 153, 204, 255])
-        input_img[:, :, :] = np.digitize(
-            input_img[:, :, :], bins, right=True) * 51
+        input_img[:, :, :] = np.digitize(input_img[:, :, :], bins, right=True) * 51
 
         # Create single channel greyscale for thresholding
         input_img_grey = cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY)
 
         # Perform Otsu thresholding and extract the background.
         # We use Binary Threshold as we want to create an all white background
-        ret, background = cv2.threshold(
-            input_img_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        ret, background = cv2.threshold(input_img_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # Convert black and white back into 3 channel greyscale
         background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
@@ -155,14 +153,14 @@ class ImageProcessor:
             os.makedirs(folder_path)
         list_frames = video.frames[nb_start:nb_end]
         for i in range(nb_start, nb_end):
-            crop_img = self.crop_image(
-                list_frames[i], start_x, end_x, start_y, end_y)
+            crop_img = self.crop_image(list_frames[i], 
+                                       start_x, end_x, start_y, end_y)
             no_bg_img = self.remove_background(crop_img)
-            inverted_img = cv2.bitwise_not(no_bg_img)
-            _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
-            final_img = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
+            gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+            inverted_img = cv2.bitwise_not(gray_img)
+            _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY_INV)
             saved_path = os.path.join(folder_path, 'frame_{}.jpg'.format(i))
-            cv2.imwrite(saved_path, final_img)
+            cv2.imwrite(saved_path, thresh)
         return
     
     def crop_frame_shadow_player(self, frame, start_x, end_x, start_y, end_y):
@@ -187,13 +185,13 @@ class ImageProcessor:
         final_img: np.ndarray 2-dim
             Cropped shadow image
         """
-        crop_img = self.crop_image(
-                frame, start_x, end_x, start_y, end_y)
+        crop_img = self.crop_image(frame, 
+                                       start_x, end_x, start_y, end_y)
         no_bg_img = self.remove_background(crop_img)
-        inverted_img = cv2.bitwise_not(no_bg_img)
-        _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY)
-        final_img = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
-        return final_img
+        gray_img = cv2.cvtColor(no_bg_img, cv2.COLOR_BGR2GRAY)
+        inverted_img = cv2.bitwise_not(gray_img)
+        _, thresh = cv2.threshold(inverted_img, 0, 255, cv2.THRESH_BINARY_INV)
+        return thresh
 
     def save_ImageList(self,imageList,outPutPath,toImageBool):
         """
