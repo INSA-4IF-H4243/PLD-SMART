@@ -8,8 +8,20 @@ Processor/__pycache__/
 
 img/*
 image_input/*
-dataset/*
-shadow_full_output/*
+
+shadow_full_output/backhand/*
+shadow_full_output/backhand_slice/*
+shadow_full_output/backhand_volley/*
+shadow_full_output/backhand2hands/*
+shadow_full_output/flat_service/*
+shadow_full_output/forehand_flat/*
+shadow_full_output/forehand_openstands/*
+shadow_full_output/forehand_slice/*
+shadow_full_output/forehand_volley/*
+shadow_full_output/kick_service/*
+shadow_full_output/slice_service/*
+shadow_full_output/smash/*
+
 shadow_test/*
 
 *.ipynb
