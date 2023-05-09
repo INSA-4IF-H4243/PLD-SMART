@@ -4,14 +4,14 @@ import cv2
 import numpy as np
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
-from pynput.keyboard import Key, Listener
+
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
+videoPath='datasetVideosCourtes/v.mp4'#chemin de la video
 outPutPathJHaut='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/WawrikaDjoko'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
@@ -24,17 +24,6 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 
 tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
-k_pressed=False
-def on_press(key):
-        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
-    if key==keyboard.Key.space:
-
-        global k_pressed
-        k_pressed=True
-
-from pynput import keyboard
-key_listener = keyboard.Listener(on_press=on_press)
-key_listener.start()
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -211,21 +200,27 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         (x1, y1, w1, h1) = affichageJBas
 
         crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput))
+        silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
 
         crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput))
+        silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
 
         ###AFFICHAGE 
-        
-        cv2.imshow("feed", frame1)
-        if(devMode):cv2.imshow("feed2", dilated)
+        if(affichage):
 
-        cv2.imshow("JoueurHaut", silouhetteHaut)
-        cv2.imshow("JoueurBas", silouhetteBas)
+            cv2.imshow("feed", frame1)
+            if(devMode):cv2.imshow("feed2", dilated)
 
-        ##ENREGISTREMENT
-        if(k_pressed==True):
+            cv2.imshow("JoueurHaut", silouhetteHaut)
+            cv2.imshow("JoueurBas", silouhetteBas)
+
+        ###ENREGISTREMENT des silouhettes dans le TABLEAU
+        tableauSortieJHaut.append(silouhetteHaut/255)
+        tableauSortieJBas.append(silouhetteBas/255)
+
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+        if countSave%cutFrameNB==0:
+
             print("dernier coup du joueur en haut:")
             for i in range(len(tabCoups)):
                 print(i," : ",tabCoups[i])
@@ -236,16 +231,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabCoups[i])
             coupJBas=int(input())
 
-            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas[len(tableauSortieJHaut)-15:len(tableauSortieJHaut)],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
-            print("\nséquence enregistrée, reprise...\n")
-            k_pressed=False
+            if(coupJHaut):imageProcessor.save_ImageList(tableauSortieJHaut,outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+            if(coupJBas):imageProcessor.save_ImageList(tableauSortieJBas,outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
 
-        ###ENREGISTREMENT des silouhettes dans le TABLEAU
-        tableauSortieJHaut.append(silouhetteHaut/255)
-        tableauSortieJBas.append(silouhetteBas/255)
-
-
+            tableauSortieJHaut=[]
+            tableauSortieJBas=[]
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
