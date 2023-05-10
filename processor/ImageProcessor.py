@@ -192,9 +192,14 @@ class ImageProcessor:
             i = i.astype(int)
             np.savetxt(saved_path, i, fmt='%d', delimiter=" ")
             if(imageList):
-                saved_pathIm = os.path.join(
-                    outPutImBas, 'frame_{}.jpg'.format(count))
-                cv2.imwrite(saved_pathIm, i*255)
+                if count < 10:
+                    saved_pathIm = os.path.join(
+                        outPutImBas, 'frame_0{}.jpg'.format(count))
+                    cv2.imwrite(saved_pathIm, i*255)
+                else:
+                    saved_pathIm = os.path.join(
+                        outPutImBas, 'frame_{}.jpg'.format(count))
+                    cv2.imwrite(saved_pathIm, i*255)
 
     def crop_silouhette(self, img, pixelSize):
         """
