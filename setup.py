@@ -16,5 +16,5 @@ setup(name='smart',
                  'smart.processor': './processor'},
     install_requires=['numpy', 'scipy',
                       'matplotlib', 'opencv-python',
-                      'ffmpeg-python', 'cvzone', 'mediapipe']
+                      'pynput', 'cvzone', 'mediapipe']
     )

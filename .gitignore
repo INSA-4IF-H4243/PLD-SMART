@@ -5,7 +5,8 @@ build/
 smart.egg-info/
 Video/__pycache__/
 Processor/__pycache__/
-datasetVideos/
+dataset/
+datasetVideosCourtes/
 img/*
 image_input/*
 
@@ -24,7 +25,9 @@ shadow_full_output/smash/*
 
 shadow_test/*
 
-*.ipynb
+test_rm_bg.ipynb
+
+*.hdf5
 
 # PyCharm #
 .idea/
