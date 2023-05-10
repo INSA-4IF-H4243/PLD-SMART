@@ -45,7 +45,7 @@ def save_trajectoire(trajectoire, outPutPath) :
     if not os.path.exists(outPutPath):
         os.makedirs(outPutPath)
     
-    with open(outPutPath+'/pos_{}.csv','a') as f :
+    with open(outPutPath+'/datasetTrajectoire','a') as f :
         writer = csv.writer(f)
         writer.writerow(trajectoire)
         f.close()
