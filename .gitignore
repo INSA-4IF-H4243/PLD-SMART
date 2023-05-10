@@ -8,6 +8,8 @@ Video/__pycache__/
 Processor/__pycache__/
 
 img/*
+trajectoire/*
+datasetVideos/*
 image_input/*
 
 shadow_full_output/backhand/*

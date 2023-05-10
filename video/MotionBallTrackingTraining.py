@@ -5,6 +5,10 @@ import numpy as np
 import ffmpeg
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
+from pynput.keyboard import Key, Listener
+from pynput import keyboard
+import csv
+import os
 import math
 
 ########################PARAMETRES :
@@ -16,17 +20,32 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/partie1.mp4'#chemin de la video
-outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
+videoPath='datasetVideos/partie2.mp4'#chemin de la video
+outPutPathBalle='trajectoire'#chemin d'enregistrement de la trajectoire de la balle
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
+nb_frame_trajectoire=20#nombre de frame pour la trajectoire de la balle
 fpsOutput=20#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
-tableauSortieJHaut=[]
-tableauSortieJBas=[]
+tableau_sortie_balle = []
 tableau_position_balle = []
 tableau_trajectoire_balle = []
+
+tabDirection=["bas_haut","haut_bas","balle_non_detectee"]
+tabTrajectoire=["croise","centre","long de ligne"]
+tabTypeCroiseCentre=["court","long","lobe","amortie"]
+tabTypeLigne=["normal","amortie","lobe"]
+k_pressed=False
+def on_press(key):
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+    if key==keyboard.Key.space:
+
+        global k_pressed
+        k_pressed=True
+
+key_listener = keyboard.Listener(on_press=on_press)
+key_listener.start()
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -80,6 +99,15 @@ def englobe(rec1, rec2) :
     if (rec1[0] <= (rec2[0]+10) and rec1[1] <= (rec2[1]+10) and (rec1[0]+rec1[2]) >= (rec2[0]+rec2[2]-10) and (rec1[1]+rec1[3]) >= (rec2[1]+rec2[3]-10) ) or (rec2[0] <= (rec1[0]+10) and rec2[1] <= (rec1[1]+10) and (rec2[0]+rec2[2]) >= (rec1[0]+rec1[2]-10) and (rec2[1]+rec2[3]) >= (rec1[1]+rec1[3]-10) ):
         return True
     return False
+
+def save_trajectoire(trajectoire, outPutPath) :
+    if not os.path.exists(outPutPath):
+        os.makedirs(outPutPath)
+    
+    with open(outPutPath+'/pos_{}.csv','a') as f :
+        writer = csv.writer(f)
+        writer.writerow(trajectoire)
+        f.close()
 
 ########################
 
@@ -153,6 +181,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
         if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
 
+        ball_rec.append(new_rec)
+
         #fusion des contours proches
         if(contour_taille(rec_base)<100):
             for rec in ball_rec[:]:         
@@ -161,7 +191,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                     if new_rec != rec_base:
                         ball_rec.remove(rec)
             if contour_taille(new_rec) > 20 : ball_rec.append(new_rec)
-
+            
         else :
             for rec in tab_rec[:]:         
                 up_low_rec = rec[1] < milieu_y*2/3
@@ -245,26 +275,54 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 if not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 100 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 100 and joueurs[1][1]+joueurs[1][3]+20 > rec[1])) :
                     minBalle=rec  
                     bBalle = 1
-
+    
     if bBalle : 
         balle = minBalle
         balle_detecte = True
         compteur_non_detection = 0
-        print(balle)
         pos_balle = centre(balle)
         tableau_trajectoire_balle.append(pos_balle)
-
+        #derniere_position_balle = pos_balle
+        #print(centre(balle))
     else :
         tableau_trajectoire_balle.append((-1,-1))
         compteur_non_detection+=1
+        #print((-1,-1))
 
     if len(tableau_trajectoire_balle) > 45 :
         tableau_trajectoire_balle.pop(0)
+
+    #gerer les trajectoires
+
+    # if compteur_non_detection > 6 and derniere_position_balle[1] > 10 :
+    #     if len(tableau_trajectoire_balle) > 10 :                
+    #         tableau_position_balle.append(tableau_trajectoire_balle)
+    #         frameX = frame1
+    #         print(tableau_trajectoire_balle)
+    #     tableau_trajectoire_balle.clear()
+    #     compteur = 0
+    # else :
+    #     if bBalle :
+    #         distance = distance_point(pos_precedent, pos_balle)
+    #         print(distance)
+    #         if (distance > 50000 + compteur*1000) :
+    #             tableau_trajectoire_balle.clear()
+    #             compteur = 0
+    #         else :
+    #             compteur+=1
+    #             pos_precedent = pos_balle
+                        
+    # if len(tableau_position_balle) != 0 :
+    #     for pos in tableau_position_balle[-1] :
+    #         if pos[0] == -1 and pos[1] == -1 : continue
+    #         cv2.circle(frameX, (int(pos[0]), int(pos[1])), 1, (255, 255, 0), 2)
+    #     cv2.imshow("trajectoire balle", frameX)   
     
     (x, y, w, h) = balle
     if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)
 
     ###DESSIN DU CONTOUR DES JOUEURS
+    # if(nbFrame%rapportFps<1):
 
     ###CREATION CONTOUR AVEC DECALAGE
     decalageX = int(milieu_x/30)
@@ -282,6 +340,42 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
         cv2.imshow("feed", frame1)
         if(devMode):cv2.imshow("feed2", dilated)
+
+    ###ENREGISTREMENT POSITION BALLE
+
+    if(k_pressed==True):
+        trajectoire = -1
+        type = -1
+        print("Direction:")
+        for i in range(len(tabDirection)):
+            print(i," : ",tabDirection[i])
+        direction=int(input())
+
+        if direction == 0 or direction == 1 :
+            print("Trajectoire:")
+            for i in range(len(tabTrajectoire)):
+                print(i," : ",tabTrajectoire[i])
+            trajectoire=int(input())
+        else :
+            save_trajectoire(tableau_trajectoire_balle, outPutPathBalle + '/non_detecte')
+
+        if(trajectoire != -1):
+            print("Type de balle:")
+            if trajectoire == 0 or trajectoire == 1 :
+                for i in range(len(tabTypeCroiseCentre)):
+                    print(i," : ",tabTypeCroiseCentre[i])
+                type=int(input())
+            elif trajectoire == 2 :
+                for i in range(len(tabTypeLigne)):
+                    print(i," : ",tabTypeLigne[i])
+                type=int(input())
+
+        if (type != -1) : 
+            if trajectoire == 0 or trajectoire == 1 : save_trajectoire(tableau_trajectoire_balle, outPutPathBalle +'/'+tabDirection[direction] + '/'+tabTrajectoire[trajectoire] + '/'+tabTypeCroiseCentre[type])
+            else : save_trajectoire(tableau_trajectoire_balle, outPutPathBalle + '/'+tabDirection[direction] + '/'+tabTrajectoire[trajectoire] + '/'+tabTypeLigne[type])
+
+        print("\nséquence enregistrée, reprise...\n")
+        k_pressed=False
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
