@@ -1,6 +1,7 @@
 import cv2
 #!pip install .
 import cv2
+import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
@@ -24,7 +25,7 @@ outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=7#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
-
+cutFrameNB=15#nombre d'images pour un coups
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
@@ -74,39 +75,23 @@ def englobant(rec1, rec2):
     return rec1
 
 ########REASEAU DE NEURONES:
-# input_shape_cnn=15*50*50
-# output_y=[0,1,2,3] #- 0: coup droit- 1: déplacement- 2: revers- 3: service
-# model_cnn = Sequential(
-#     [
-#         tf.keras.Input(shape = input_shape_cnn), # 50, 15*50, 3
-#         Conv2D(filters=16, kernel_size=(3, 3), activation="relu"),
-#         BatchNormalization(),
-#         MaxPooling2D(pool_size=(2, 2)),
-#         Dropout(0.2),
-        
-#         Conv2D(filters=32, kernel_size=(3, 3), activation="relu"),
-#         BatchNormalization(),
-#         MaxPooling2D(pool_size=(2, 2)),
-#         Dropout(0.2),
-        
-#         Conv2D(filters=64, kernel_size=(3, 3), activation="relu"),
-#         BatchNormalization(),
-#         MaxPooling2D(pool_size=(2, 2)),
-#         Dropout(0.2),
-        
-#         Flatten(),
-#         Dense(units=128, activation="relu"),
-#         Dense(units=len(output_y), activation="softmax"),
-#     ]
-# )
+input_shape_model=15*50*50
+output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
+output_name=['coup droit','déplacement','revers','service']
+tf.random.set_seed(1234) # for consistent results
+model = Sequential(
+    [               
+        tf.keras.Input(shape = input_shape_model), # 50*50 * 15 = 37500
+        Dense(units=16, activation="relu"),
+        Dense(units=32, activation="relu"),
+        Dense(units=64, activation="sigmoid"),
+        Dense(units=128, activation="relu"),
+        Dense(units=len(output_y), activation="softmax"),
+    ]
+)          
+model.summary()
+model.load_weights('JoueurBas_MulClass_Weights-001--3.69951.hdf5')
 
-# model_cnn.summary()
-
-# model_cnn.compile(
-#     loss = tf.keras.losses.SparseCategoricalCrossentropy(),
-#     optimizer='rmsprop',
-#     metrics=['accuracy']
-# )
 
 ########TRAITEMENT DE LA VIDEO
 
@@ -251,7 +236,13 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
-
+        
+        prected=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).flatten()
+        #print(prected.shape)
+        if(prected.shape[0]==37500):
+            pred = model.predict(np.asmatrix(prected))
+            y_pred = np.argmax(pred, axis=1)
+            print("Predicted labels: ", output_name[int(y_pred)])
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
     frame2 = frame3
@@ -266,7 +257,7 @@ cap.release()
 
 ###ENREGISTREMENT DONNEES:
 
-imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
-imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
+# imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
+# imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
 
 print("fin")
