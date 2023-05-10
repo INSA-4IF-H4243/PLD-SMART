@@ -20,12 +20,13 @@ for filename in os.listdir(directory):
         img = cv2.imread(f)
         imp=ImageProcessor()
         grayimg=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_out=imp.crop_silouhette(grayimg,50)
-        img_out=imp.binary(img_out)
-        images.append(img_out)
+        _, final_img = cv2.threshold(grayimg, 0, 255, cv2.THRESH_BINARY)
+        img_out=imp.crop_silouhette(final_img,50)
+        _, final_img = cv2.threshold(img_out, 254, 255, cv2.THRESH_BINARY)
+        images.append(final_img)
 
-
-cv2.imshow('Gray image', img_out)
+print(final_img)
+cv2.imshow('Gray image', final_img)
   
 cv2.waitKey(0)
 cv2.destroyAllWindows()
