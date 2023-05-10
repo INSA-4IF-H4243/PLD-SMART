@@ -190,7 +190,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                     new_rec = englobant(rec_base, rec)
                     if new_rec != rec_base:
                         ball_rec.remove(rec)
-            if contour_taille(new_rec) > 20 : ball_rec.append(new_rec)
+            if contour_taille(new_rec) > 10 : ball_rec.append(new_rec)
             
         else :
             for rec in tab_rec[:]:         
