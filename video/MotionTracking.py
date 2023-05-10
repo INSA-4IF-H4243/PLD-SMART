@@ -5,16 +5,24 @@ from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
+from keras.callbacks import ModelCheckpoint
+from keras.optimizers import Adam
+import tensorflow as tf
+import random
+from sklearn.preprocessing import LabelEncoder
+
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
+PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
-fpsOutput=20#FPS de la sortie
+fpsOutput=7#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
@@ -65,7 +73,40 @@ def englobant(rec1, rec2):
         return rec3
     return rec1
 
-########################
+########REASEAU DE NEURONES:
+# input_shape_cnn=15*50*50
+# output_y=[0,1,2,3] #- 0: coup droit- 1: déplacement- 2: revers- 3: service
+# model_cnn = Sequential(
+#     [
+#         tf.keras.Input(shape = input_shape_cnn), # 50, 15*50, 3
+#         Conv2D(filters=16, kernel_size=(3, 3), activation="relu"),
+#         BatchNormalization(),
+#         MaxPooling2D(pool_size=(2, 2)),
+#         Dropout(0.2),
+        
+#         Conv2D(filters=32, kernel_size=(3, 3), activation="relu"),
+#         BatchNormalization(),
+#         MaxPooling2D(pool_size=(2, 2)),
+#         Dropout(0.2),
+        
+#         Conv2D(filters=64, kernel_size=(3, 3), activation="relu"),
+#         BatchNormalization(),
+#         MaxPooling2D(pool_size=(2, 2)),
+#         Dropout(0.2),
+        
+#         Flatten(),
+#         Dense(units=128, activation="relu"),
+#         Dense(units=len(output_y), activation="softmax"),
+#     ]
+# )
+
+# model_cnn.summary()
+
+# model_cnn.compile(
+#     loss = tf.keras.losses.SparseCategoricalCrossentropy(),
+#     optimizer='rmsprop',
+#     metrics=['accuracy']
+# )
 
 ########TRAITEMENT DE LA VIDEO
 
@@ -190,24 +231,22 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
-        
-        
-        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas = imageProcessor.crop_silouhette(crop_imgBas, PixelSizeOutput)
-
-        crop_test=imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
-        filter_test=imageProcessor.filtre_green_blue(crop_test)
-        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.crop_silouhette(crop_imgHaut, PixelSizeOutput)
+        try:
+            crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+            crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)  
+            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
+        except:
+            silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
+            silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
         ###AFFICHAGE 
-        if(affichage):
+        
+        cv2.imshow("feed", frame1)
+        if(devMode):cv2.imshow("feed2", dilated)
 
-            cv2.imshow("feed", frame1)
-            if(devMode):cv2.imshow("feed2", dilated)
-
-            cv2.imshow("JoueurHaut", silouhetteHaut)
-            cv2.imshow("JoueurBas", filter_test)
+        cv2.imshow("JoueurHaut", silouhetteHaut)
+        cv2.imshow("JoueurBas", silouhetteBas)
 
         ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
