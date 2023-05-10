@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
-from pynput.keyboard import Key, Listener
 from pynput import keyboard
 ########################PARAMETRES :
 
@@ -12,9 +11,9 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/6481-6600.mp4'#chemin de la video
-outPutPathJHaut='/video1'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='/video1'#chemin d'enregistrement de la silouhette du Joueur 2
+videoPath='dataset/46840-47020.mp4'#chemin de la video
+outPutPathJHaut='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
 fpsOutput=7#FPS de la sortie
 cutFrameNB=15#nombre d'images pour un coups

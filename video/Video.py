@@ -19,11 +19,25 @@ class Video(object):
             self.path = ''
             self.frames = np.array([])
 
+        try:
+            self.frames = kwargs['frames']
+            self.frames = np.array(self.frames)
+        except KeyError:
+            raise ValueError("The frames are not defined")
+        else:
+            if len(self.frames) == 0:
+                raise ValueError("The frames are empty")
+
     @classmethod
     def read_video(video, path: str = ''):
         if not os.path.exists(path):
             raise FileNotFoundError("The file {} does not exist".format(path))
         kwargs = {'path': path}
+        return video(**kwargs)
+    
+    @classmethod
+    def read_video_from_frames(video, frames):
+        kwargs = {'frames': frames}
         return video(**kwargs)
 
     def save_video(self, saved_path: str):

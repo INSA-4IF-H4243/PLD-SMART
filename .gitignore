@@ -24,7 +24,9 @@ shadow_full_output/smash/*
 
 shadow_test/*
 
-*.ipynb
+test_rm_bg.ipynb
+
+*.hdf5
 
 # PyCharm #
 .idea/

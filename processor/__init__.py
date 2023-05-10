@@ -1,2 +1,2 @@
-from .VideoProcessor import VideoProcessor, process_ffmpeg
+from .VideoProcessor import VideoProcessor
 from .ImageProcessor import ImageProcessor
