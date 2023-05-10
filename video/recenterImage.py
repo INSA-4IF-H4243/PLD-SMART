@@ -21,13 +21,14 @@ for filename in os.listdir(directory):
         imp=ImageProcessor()
         grayimg=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_out=imp.crop_silouhette(grayimg,50)
+        img_out=imp.binary(img_out)
         images.append(img_out)
 
 
-cv2.imshow('Gray image', grayimg)
+cv2.imshow('Gray image', img_out)
   
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-imp.save_ImageList(images, directory, True)
+imp.save_ImageList(images, directory+'Recenter', True)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
