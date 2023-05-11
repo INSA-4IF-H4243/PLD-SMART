@@ -11,10 +11,12 @@ setup(name='smart',
     description='Models for scripting tennis matches',
     author="INSA Hexanome H4243 - 4IF",
     version='1.0',
-    packages=['smart.video', 'smart.processor'],
+    packages=['smart.video', 'smart.processor', 'smart.model'],
     package_dir={'smart.video': './video',
-                 'smart.processor': './processor'},
-    install_requires=['numpy', 'scipy',
+                 'smart.processor': './processor',
+                 'smart.model': './model'},
+    install_requires=['tensorflow', 'numpy', 'scipy',
                       'matplotlib', 'opencv-python',
-                      'pynput', 'cvzone', 'mediapipe']
+                      'pynput', 'cvzone', 'mediapipe',
+                      'scikit-learn']
     )
