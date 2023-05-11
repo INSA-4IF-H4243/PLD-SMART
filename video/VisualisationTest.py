@@ -91,6 +91,11 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
+
+tabDilated=[]
+tabGray=[]
+tabContour=[]
+
 while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
@@ -122,7 +127,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 1)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
         if( contour_taille(rec_base)<100 or contour_taille(rec_base)>1000):continue
@@ -141,7 +146,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 1)
 
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
@@ -184,10 +189,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
         affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
-        cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
         (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
-        cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
@@ -204,13 +207,22 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             
         #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
         
-        ###AFFICHAGE 
 
-    cv2.imshow("feed", frame1)
-    if(devMode):cv2.imshow("feed2", dilated)
+    ###AFFICHAGE 
 
-    cv2.imshow("JoueurHaut : ", silouhetteHaut)
-    cv2.imshow("JoueurBas : ", silouhetteBas)
+    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
+    cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
+
+    cv2.imshow("contours", frame1)
+    if(devMode):cv2.imshow("difference(img_t2-img_t1_img_t0)", diff)
+    if(devMode):cv2.imshow("noir_et_blanc_dilate", dilated)
+
+    tabContour.append(frame1)
+    tabGray.append(diff)
+    tabDilated.append(dilated)
+
+    #cv2.imshow("JoueurHaut : ", silouhetteHaut)
+    #cv2.imshow("JoueurBas : ", silouhetteBas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -221,7 +233,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if cv2.waitKey(40) == 27:
         break
 
+###ENREGISTREMENT
+imageProcessor.save_ImageStandartList(imageList=tabContour,outPutPath="Contour")
+videoProcessor=VideoProcessor()
+videoProcessor.generate_video_from_frames(frame_folder="Contour",saved_path="contour.avi")
 cv2.destroyAllWindows()
 cap.release()
+
 
 print("fin")
