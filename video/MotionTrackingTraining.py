@@ -1,3 +1,4 @@
+import copy
 import cv2
 #!pip install .
 import cv2
@@ -5,23 +6,27 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
 from pynput import keyboard
+import util
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/46840-47020.mp4'#chemin de la video
-outPutPathJHaut='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 2
+PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
+videoPath='dataset/services.mp4'#chemin de la video
+outPutPathJHaut='/GG'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='/GG'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
-fpsOutput=7#FPS de la sortie
+fpsOutput=15#FPS de la sortie
 cutFrameNB=15#nombre d'images pour un coups
-videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning pour une seconde= fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
+#taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
+tableau_position_balle = []
+tableau_trajectoire_balle = []
 
 tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
 k_pressed=False
@@ -82,81 +87,107 @@ def englobant(rec1, rec2):
 
 ########TRAITEMENT DE LA VIDEO
 
-#####LECTURE
-#cap = cv2.VideoCapture('rv_j1/cut6.mp4')
+#####LECTURE VIDEO
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
 imageProcessor = ImageProcessor()
-countSave=0
-ret1, frame1 = cap.read()
-ret2, frame2 = cap.read()
-ret3, frame3 = cap.read()
 
+ret3, frame3 = cap.read()
 #####AJUSTEMENT TAILLE
-frame1=cv2.resize(frame1,videoResize)
-milieu_y=int(len(frame1)/2)
-milieu_x=int(len(frame1[0])/2)
+frame1=cv2.resize(frame3,videoResize)
+milieu_y=200
+milieu_x=400
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
-joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
+joueurs=[(200,200,50,50),(200,200,50,50)]
+print(joueurs)
+balle = (milieu_x-25,milieu_y,50,50)
+pos_balle = centre(balle)
+pos_precedent = pos_balle
+balle_detecte = False
+rayon_detection = 5
+compteur_non_detection = 0
+limite = 3
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
+
+factor = 0.49
+parameters = {
+    "filter": {"iterations": 10, "shape": (5, 5)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+parameters_dilation = {
+    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+parameters_silouhette = {
+    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+
+subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
+subtractor = util.subtractor(subtractors[2], parameters["substractor"])
+
+ymin = 30
+ymax = 370
+xmin = 80
+xmax = 720
+
 while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
-    #print(frame3)
     ###AJUSTEMENT TAILLE
-    frame1=cv2.resize(frame1,videoResize)
-    frame2=cv2.resize(frame2,videoResize)
-    frame3=cv2.resize(frame3,videoResize)
+    # frame1=cv2.resize(frame1,videoResize)
+    # frame2=cv2.resize(frame2,videoResize)
 
-    ###DIFFERENCE IMAGES POUR VOIR LES PIXELS EN MOUVEMENTS
-    diff1 = cv2.absdiff(frame1, frame2)
-    diff2 = cv2.absdiff(frame2, frame3)
-    diff= cv2.absdiff(diff1, diff2)
+    transformations = []
 
-    ###TRAITEMENT ET BINARISATION
-    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    #flow=cv2.calcOpticalFlowFarneback(gray, gray, None)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    _, thresh = cv2.threshold(blur, 40, 255, cv2.THRESH_OTSU)
-    dilated = cv2.dilate(thresh, None, iterations=3)
+    transformations.append(cv2.resize(frame3, (800,400)))
+    # cv2.imshow("frame", transformations[-1])
+
+    transformations.append(transformations[-1][ymin:ymax, xmin:xmax])
+    # cv2.imshow("test", transformations[-1])
+
+    transformations.append(cv2.cvtColor(transformations[-1], cv2.COLOR_BGR2GRAY))
+    # cv2.imshow("gray", transformations[-1])
+
+    transformations.append(subtractor.apply(transformations[-1]))
+    transformations.append(util.filter(transformations[-1], "closing",parameters["filter"]))
+    transformations.append(util.filter(transformations[-1], "dilation",parameters_dilation["filter"]))  
+
+    
+
+    # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
+    # cv2.imshow("dilation", transformations[-1])
+
+    # transformations.append(cv2.medianBlur(transformations[-1], 5))
+    # cv2.imshow("blur", transformations[-1])
 
     ###RECHERCHE CONTOURS DES FORMES EN MOUVEMENT
-    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-    ###PREMIERE DISCRIMINATION DES CONTOURS
-    tab_rec = []    #contient les contours (contour=(x,y,w,h))
+    contours, hierarchy = cv2.findContours(
+    transformations[-1], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+    tab_rec = []
+    ball_rec =[]
     for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > 1:
+            x, y, w, h = cv2.boundingRect(contour)
+            if area > 2000 : continue
+            if area > 300:
+                tab_rec.append((x, y, w, h))
+            else:
+                ball_rec.append((x, y, w, h))
 
-        rec_base = cv2.boundingRect(contour)
-        x = rec_base[0]
-        y = rec_base[1]
-        up_low_base = y < milieu_y*2/3
-        (x, y, w, h) = rec_base
-        new_rec = rec_base
-        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
-
-        #élimination des contours dont la forme est clairement differente d'un tennisman
-        if( contour_taille(rec_base)<100 or contour_taille(rec_base)>1000):continue
-        if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
-
-        #fusion des contours proches
-        for rec in tab_rec[:]:         
-            up_low_rec = rec[1] < milieu_y*2/3
-            if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
-                new_rec = englobant(rec_base, rec)
-                if new_rec != rec_base:
-                    tab_rec.remove(rec)
-        tab_rec.append(new_rec)
+    cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
 
     ###AFFICHAGE DE TOUS LES CONTOURS
+    
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
-
+            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -167,8 +198,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             joueurs[1]=tab_rec[0]
 
     else:                       #Sinon on prend les contours les plus proches des anciens contours identifiés comme ceux des joueurs (=tracking)
-        minJoueur0=(milieu_x-25,milieu_y-75,50,50)
-        minJoueur1=(milieu_x-25,milieu_y+75,50,50)
+        minJoueur0=(9999,9999,9999,9999)
+        minJoueur1=(9999,9999,9999,9999)
         b0 = 0
         b1 = 0
         for rec in tab_rec: 
@@ -189,42 +220,146 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         if b1:
             joueurs[1] = minJoueur1
 
-    ###DESSIN DU CONTOUR DES JOUEURS
+    minBalle = (1000000, 1000000, 1000000, 1000000, 1000000)
+    bBalle = 0
+    compteur = 0
+
+    if balle_detecte:
+        for rec in ball_rec :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20 and distance2(balle,rec) > 1 :
+                minBalle=rec  
+                bBalle = 1
+        if bBalle : balle = minBalle
+        else : balle_detecte = False
+
+    b = False
+    if not balle_detecte:
+        if compteur_non_detection < limite :
+            for rec in ball_rec :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20+rayon_detection*compteur_non_detection) :
+                    minBalle=rec  
+                    bBalle = 1
+                    b = True
+        else :
+            for rec in ball_rec :
+                if not b and ((distance2(joueurs[0],rec) < distance2(joueurs[0],minBalle) and distance2(joueurs[0],rec) < 100 and joueurs[0][1]-20 < rec[1]) or (distance2(joueurs[1],rec) < distance2(joueurs[1],minBalle) and distance2(joueurs[1],rec) < 100 and joueurs[1][1]+joueurs[1][3]+20 > rec[1])) :
+                    minBalle=rec  
+                    bBalle = 1
+
+    if bBalle : 
+        balle = minBalle
+        balle_detecte = True
+        compteur_non_detection = 0
+        pos_balle = centre(balle)
+        tableau_trajectoire_balle.append(pos_balle)
+
+    else :
+        tableau_trajectoire_balle.append((-1,-1))
+        compteur_non_detection+=1
+
+    if len(tableau_trajectoire_balle) > 45 :
+        tableau_trajectoire_balle.pop(0)
+
+    if len(tableau_trajectoire_balle) == 45 :
+
+        tableau_position_balle = copy.deepcopy(tableau_trajectoire_balle)
+        no_pos = 0
+        no_debut = False
+
+        for i in range(len(tableau_trajectoire_balle)) :
+            
+            if tableau_trajectoire_balle[i] == (-1,-1) :
+                no_pos+=1
+
+                if i == 0 :
+                    no_debut = True
+
+                if no_pos == 1 and not no_debut:
+                        av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
+
+                if i == len(tableau_trajectoire_balle)-1 and not no_debut:
+                    for j in range(0,no_pos+1) :
+                        tableau_position_balle[i-j] = derniere_pos_balle
+            else :
+                derniere_pos_balle = tableau_trajectoire_balle[i]
+                if no_pos > 0 :
+                    if no_debut :
+                        for j in range(1,no_pos+1) :
+                            tableau_position_balle[i-j] = derniere_pos_balle
+                        no_debut = False
+                    else :
+                        for j in range(1,no_pos+1) :
+                            x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
+                            y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
+                            tableau_position_balle[i-j] = (x,y)
+                no_pos = 0
+    
+    for joueur in joueurs :
+        cv2.rectangle(
+                    transformations[0], (joueur[0] + xmin - 10, joueur[1] + ymin - 10), (joueur[0] + xmin + joueur[2], joueur[1] + ymin + joueur[3]), (0, 0, 255), 2
+                )  # players (x,y)(x1,y1) -> (x,y,w,h)
+    if balle_detecte : 
+        cv2.rectangle(
+                    transformations[0], (balle[0] + xmin - 10, balle[1] + ymin - 10), (balle[0] + xmin + balle[2], balle[1] + ymin + balle[3]), (0, 255, 0), 2
+                )  # ball
+    
+    x_bas=round(joueurs[1][0] + xmin - 10)
+    y_bas=round(joueurs[1][1] + ymin - 10)
+    w_bas=round(joueurs[1][0] + xmin + joueurs[1][2] - x_bas)
+    h_bas=round(joueurs[1][1] + ymin + joueurs[1][3] - y_bas)
+    affichageJBas=(x_bas, y_bas, w_bas, h_bas)
+
+    x_haut=round(joueurs[0][0] + xmin - 10)
+    y_haut=round(joueurs[0][1] + ymin - 10)
+    w_haut=round(joueurs[0][0] + xmin + joueurs[0][2] - x_haut)
+    h_haut=round(joueurs[0][1] + ymin + joueurs[0][3] - y_haut)
+    affichageJHaut=(x_haut, y_haut, w_haut, h_haut)
+    ###DESSIN DU CONTOUR DES JOUEURS)
+    cv2.rectangle(
+        transformations[0], (x_bas,y_bas),(x_bas + w_bas, y_bas + h_bas), (255, 0, 255), 2)
+    cv2.rectangle(
+        transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
+
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
+
+    ###RECUPERATION SILOUHETTE 
     if(nbFrame%rapportFps<1):
-
-        countSave+=1
-
-        ###CREATION CONTOUR AVEC DECALAGE
-        decalageX = int(milieu_x/30)
-        decalageY = int(milieu_y/15)
-        
-        (x, y, w, h) = joueurs[0] #Joueur 0 du haut
-        affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
-        cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
-        (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
-        affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
-        cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
-
-        ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
         try:
-            crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-            crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)  
-            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
+
+            # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
+            # crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
+            # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
+            # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
+            
+            silouhetteBas  = transformations[3][joueurs[1][1]-15:joueurs[1][1] + joueurs[1][3]+30,joueurs[1][0]-15:joueurs[1][0] + joueurs[1][2]+30]
+            silouhetteBas=np.ceil(silouhetteBas/255)*255
+            silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
+            silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
+
+            silouhetteHaut = transformations[3][joueurs[0][1]-15:joueurs[0][1] + joueurs[0][3]+30,joueurs[0][0]-15:joueurs[0][0] + joueurs[0][2]+30]
+            silouhetteHaut=np.ceil(silouhetteHaut/255)*255
+            silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
+            silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
         except:
             silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
 
-        ###AFFICHAGE 
-        
-        cv2.imshow("feed", frame1)
-        if(devMode):cv2.imshow("feed2", dilated)
+    ###AFFICHAGE 
+    
+    
+        cv2.imshow("feed", transformations[0])
+        #if(devMode):cv2.imshow("feed2", dilated)
+        if devMode:cv2.imshow("closing", transformations[3])
+        cv2.imshow("JoueurHaut : ", silouhetteHaut)
+        cv2.imshow("JoueurBas : ", silouhetteBas)
 
-        cv2.imshow("JoueurHaut", silouhetteHaut)
-        cv2.imshow("JoueurBas", silouhetteBas)
+    
 
         ##ENREGISTREMENT
         if(k_pressed==True):
@@ -247,20 +382,23 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
 
-
-
     ###CONTINUER LA LECTURE DE LA VIDEO
-    frame1 = frame2
-    frame2 = frame3
     ret3, frame3 = cap.read()
     nbFrame+=1
 
+
+
     if cv2.waitKey(40) == 27:
         break
-
+    ret3, frame3 = cap.read()
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 cv2.destroyAllWindows()
 cap.release()
 
+###ENREGISTREMENT DONNEES:
 
+# imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
+# imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
 
 print("fin")
