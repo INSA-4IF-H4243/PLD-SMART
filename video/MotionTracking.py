@@ -24,8 +24,13 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
+<<<<<<< HEAD
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
 videoPath='dataset/partie2.mp4'#chemin de la video
+=======
+PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
+videoPath='dataset/clip/2.mp4'#chemin de la video
+>>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -123,7 +128,7 @@ imageProcessor = ImageProcessor()
 ret3, frame3 = cap.read()
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame3,videoResize)
-milieu_y=200
+milieu_y=150
 milieu_x=400
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
@@ -198,8 +203,13 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
+<<<<<<< HEAD
             if area > 1500 : continue
             if area > 300:
+=======
+            if area > 2000 : continue
+            if area > 300 and not  (w/h>4 or h/w>4):
+>>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
                 tab_rec.append((x, y, w, h))
             elif area < 100:
                 ball_rec.append((x, y, w, h))
@@ -213,7 +223,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             (x, y, w, h) = rec
             cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
     #print(len(tab_rec))
+<<<<<<< HEAD
 
+=======
+>>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -370,18 +383,21 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         
-        silouhetteBas  = transformations[3][joueurs[1][1]-15:joueurs[1][1] + joueurs[1][3]+30,joueurs[1][0]-15:joueurs[1][0] + joueurs[1][2]+30]
+        silouhetteBas  = transformations[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
+        
         silouhetteBas=np.ceil(silouhetteBas/255)*255
         silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
         silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
+    except:
+        silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
-        silouhetteHaut = transformations[3][joueurs[0][1]-15:joueurs[0][1] + joueurs[0][3]+30,joueurs[0][0]-15:joueurs[0][0] + joueurs[0][2]+30]
+    try:
+        silouhetteHaut = transformations[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
         silouhetteHaut=np.ceil(silouhetteHaut/255)*255
         silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
         silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
     except:
         silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
-        silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
     ###ENREGISTREMENT des silouhettes dans le TABLEAU
     tableauSortieJHaut.append(silouhetteHaut/255)
@@ -391,18 +407,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     
     #print(prected.shape)
-    #if(len(tableauSortieJBas)>15):
-        #seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-        #(1, 50, 750, 3)
-        #output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+    if(len(tableauSortieJBas)>15):
+        seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+        output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         
-
     #print(prected.shape)
-    #if(len(tableauSortieJHaut)>15):
-        #seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-        #output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
-            
-        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+    if(len(tableauSortieJHaut)>15):
+        seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+        output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
         
     ###AFFICHAGE 
     
