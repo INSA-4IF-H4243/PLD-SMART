@@ -3,7 +3,22 @@ import numpy as np
 import os
 
 class Image:
-    def __init__(self, flags, **kwargs):
+    def __init__(self, flags, **kwargs) -> None:
+        """
+        Constructor of the class
+
+        Parameters
+        ----------
+        flags: int
+            flags of the image (cv2.IMREAD_COLOR, cv2.IMREAD_GRAYSCALE, cv2.IMREAD_UNCHANGED)
+        **kwargs
+            path: str
+                path to the image
+
+        Returns
+        -------
+        None
+        """
         try:
             self.path = kwargs['path']
             self.img = cv2.imread(self.path, flags=flags)
@@ -17,7 +32,22 @@ class Image:
             self.height = 0
 
     @classmethod
-    def load_image(image, flags, path: str = ''):        
+    def load_image(image, flags, path: str = ''):    
+        """
+        Load an image from a path
+
+        Parameters
+        ----------
+        flags: int
+            flags of the image (cv2.IMREAD_COLOR, cv2.IMREAD_GRAYSCALE, cv2.IMREAD_UNCHANGED)
+        path: str
+            path to the image
+
+        Returns
+        -------
+        Image
+            the image loaded
+        """    
         if not os.path.exists(path):
             raise FileNotFoundError("The file {} does not exist".format(path))
         kwargs = {'path': path}

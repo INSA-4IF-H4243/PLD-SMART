@@ -10,6 +10,8 @@ datasetVideosCourtes/
 img/*
 image_input/*
 
+checkpoints/*
+
 shadow_full_output/backhand/*
 shadow_full_output/backhand_slice/*
 shadow_full_output/backhand_volley/*

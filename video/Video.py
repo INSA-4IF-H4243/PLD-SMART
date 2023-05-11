@@ -15,6 +15,7 @@ class Video(object):
                 frames.append(frame)
             cap.release()
             self.frames = np.array(frames)
+            return
         except:
             self.path = ''
             self.frames = np.array([])
