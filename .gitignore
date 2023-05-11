@@ -29,7 +29,7 @@ shadow_test/*
 
 test_rm_bg.ipynb
 
-*.hdf5
+Weights*.hdf5
 
 # PyCharm #
 .idea/

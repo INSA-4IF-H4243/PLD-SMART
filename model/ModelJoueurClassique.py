@@ -341,3 +341,22 @@ class ModelJoueurClassique:
         encoder.fit(y)
         y_pred = encoder.inverse_transform(y_pred)
         return y_pred
+
+    def predict_prob(self, seq_img):
+        """
+        Predict the class of the images
+
+        Parameters
+        ----------
+        seq_img: np.array 2-dim
+            reshaped image or list of images (images sans couleur)
+            Il faut reshape la séquence d'images en (1, 50*50*15) pour une vidéo de 15 frames
+            Il faut reshape la séquence d'images en (n, 50*50*15) pour n-vidéos de 15 frames
+
+        Returns
+        -------
+        y_pred: list
+            list of predicted classes
+        """
+        pred = self.model.predict(seq_img)
+        return pred

@@ -1,26 +1,36 @@
 import cv2
 #!pip install .
 import cv2
+import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
+from keras.callbacks import ModelCheckpoint
+from keras.optimizers import Adam
+import tensorflow as tf
+import random
+from sklearn.preprocessing import LabelEncoder
+
+from smart.model import ModelJoueurClassique
+from smart.model import ModelJoueurConvolution
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
-outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
-fpsOutput=20#FPS de la sortie
+PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
+videoPath='dataset/services.mp4'#chemin de la video
+fpsOutput=7#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
-
+cutFrameNB=15#nombre d'images pour un coups
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
-
+y_pred_haut=4
+y_pred_bas=4
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -65,8 +75,26 @@ def englobant(rec1, rec2):
         return rec3
     return rec1
 
-########################
+########REASEAU DE NEURONES:
 
+
+input_shape_model=15*50*50
+output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
+all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
+
+#JOUEUR BAS
+model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
+print(model_bas.summary_model)
+#model_bas.load_model_from_path('JoueurBasTest.hdf5')
+
+
+#JOUEUR HAUT
+model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+print(model_haut.summary_model)        
+#model_haut.load_model_from_path('JoueurHautTest.hdf5')
+
+output_bas="nothing"
+output_haut="nothing"
 ########TRAITEMENT DE LA VIDEO
 
 #####LECTURE VIDEO
@@ -182,36 +210,57 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
         affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
-        cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
+        
         (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
-        cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
+        
 
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
-        
-        
-        crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
-        silouhetteBas = imageProcessor.crop_silouhette(crop_imgBas, PixelSizeOutput)
-
-        crop_test=imageProcessor.crop_image(frame1, x1, x1+w1, y1, y1+h1)
-        filter_test=imageProcessor.filtre_green_blue(crop_test)
-        crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
-        silouhetteHaut = imageProcessor.crop_silouhette(crop_imgHaut, PixelSizeOutput)
-
-        ###AFFICHAGE 
-        if(affichage):
-
-            cv2.imshow("feed", frame1)
-            if(devMode):cv2.imshow("feed2", dilated)
-
-            cv2.imshow("JoueurHaut", silouhetteHaut)
-            cv2.imshow("JoueurBas", filter_test)
+        try:
+            crop_imgBas = imageProcessor.crop_frame_shadow_player(frame1, x1, x1+w1, y1, y1+h1)
+            crop_imgHaut = imageProcessor.crop_frame_shadow_player(frame1, x, x+w, y, y+h)
+            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)  
+            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
+        except:
+            silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
+            silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
         ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
+        
+        ###PREDICTIONS
+
+        
+        #print(prected.shape)
+        if(len(tableauSortieJBas)>15):
+            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+            #(1, 50, 750, 3)
+            output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+            
+   
+        #print(prected.shape)
+        if(len(tableauSortieJHaut)>15):
+            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+            output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+            
+        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+        
+    ###AFFICHAGE 
+
+    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
+    cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
+    
+    frame1=cv2.putText(frame1, output_haut, (affichageJHaut[0], affichageJHaut[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+    frame1=cv2.putText(frame1, output_bas, (affichageJBas[0], affichageJBas[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+
+    cv2.imshow("feed", frame1)
+    if(devMode):cv2.imshow("feed2", dilated)
+
+    cv2.imshow("JoueurHaut : ", silouhetteHaut)
+    cv2.imshow("JoueurBas : ", silouhetteBas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -227,7 +276,7 @@ cap.release()
 
 ###ENREGISTREMENT DONNEES:
 
-imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
-imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
+# imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
+# imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
 
 print("fin")

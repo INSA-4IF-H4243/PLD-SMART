@@ -201,6 +201,35 @@ class ImageProcessor:
                         outPutImBas, 'frame_{}.jpg'.format(count))
                     cv2.imwrite(saved_pathIm, i*255)
 
+    def save_ImageStandartList(self, imageList, outPutPath):
+        """
+        save a array of black and white image to 1 and 0 in csv
+
+        Parameters
+        ----------
+        imageList: List of matrix 23
+            the list of image
+        outPutPath: string
+           folder
+        toImageBool: boolean
+            1 if you want to save the images in a /image folder, 0 if you just want the 1/0 csv
+        """
+        count = 0
+        outPutImBas = outPutPath
+        if not os.path.exists(outPutPath):
+            os.makedirs(outPutPath)
+
+        for i in imageList:
+            count += 1
+            if count < 10:
+                saved_pathIm = os.path.join(
+                    outPutImBas, 'frame_0{}.jpg'.format(count))
+                cv2.imwrite(saved_pathIm, i)
+            else:
+                saved_pathIm = os.path.join(
+                    outPutImBas, 'frame_{}.jpg'.format(count))
+                cv2.imwrite(saved_pathIm, i)
+                
     def crop_silouhette(self, img, pixelSize):
         """
         Parameters
