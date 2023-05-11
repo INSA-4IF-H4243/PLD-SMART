@@ -297,41 +297,45 @@ class ModelJoueurClassique:
         print("Accuracy: ", tup[1])
         return tup
 
-    def predict(self, img):
+    def predict(self, seq_img):
         """
         Predict the class of the images
 
         Parameters
         ----------
-        img: np.array 2-dim
-            reshaped image or list of images
+        seq_img: np.array 2-dim
+            reshaped image or list of images (images sans couleur)
+            Il faut reshape la séquence d'images en (1, 50*50*15) pour une vidéo de 15 frames
+            Il faut reshape la séquence d'images en (n, 50*50*15) pour n-vidéos de 15 frames
 
         Returns
         -------
         y_pred: list
             list of predicted classes
         """
-        pred = self.model.predict(img)
+        pred = self.model.predict(seq_img)
         y_pred = np.argmax(pred, axis=1)
         return y_pred
     
-    def predict_label(self, img, y):
+    def predict_label(self, seq_img, y):
         """
         Predict the labels of the images
 
         Parameters
         ----------
-        img: np.array 2-dim
-            reshaped image or list of images
+        seq_img: np.array 2-dim
+            reshaped image or list of images (images sans couleur)
+            Il faut reshape la séquence d'images en (1, 50*50*15) pour une vidéo de 15 frames
+            Il faut reshape la séquence d'images en (n, 50*50*15) pour n-vidéos de 15 frames
         y: np.array
-            all possible output labels
+            all possible output labels (Ex: ['coup droit', 'revers', 'service', 'deplacement'])
 
         Returns
         -------
         y_pred: list
             list of predicted labels
         """
-        pred = self.model.predict(img)
+        pred = self.model.predict(seq_img)
         y_pred = np.argmax(pred, axis=1)
         encoder = LabelEncoder()
         encoder.fit(y)
