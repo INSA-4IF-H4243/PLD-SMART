@@ -26,7 +26,7 @@ enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou jus
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='dataset/clip_usopen.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
-videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
 
 y_pred_haut=4
@@ -126,7 +126,8 @@ milieu_y=int(len(frame3)/2)
 milieu_x=int(len(frame3[0])/2)
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
-joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
+joueurs=[(200,200,50,50),(200,200,50,50)]
+print(joueurs)
 balle = (milieu_x-25,milieu_y,50,50)
 pos_balle = centre(balle)
 pos_precedent = pos_balle
@@ -173,7 +174,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transformations.append(util.filter(transformations[-1], "closing"))
     transformations.append(util.filter(transformations[-1], "dilation"))  
 
-    if devMode:cv2.imshow("closing", transformations[-1])
+    
 
     # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
     # cv2.imshow("dilation", transformations[-1])
@@ -204,7 +205,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 255, 255), 2)
+            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
     print(len(tab_rec))
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
@@ -332,45 +333,52 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     w_haut=round(joueurs[0][0] + xmin + joueurs[0][2] - x_haut)
     h_haut=round(joueurs[0][1] + ymin + joueurs[0][3] - y_haut)
     affichageJHaut=(x_haut, y_haut, w_haut, h_haut)
-    ###DESSIN DU CONTOUR DES JOUEURS
-    print((x_bas + w_bas, y_bas + h_bas))
+    ###DESSIN DU CONTOUR DES JOUEURS)
     cv2.rectangle(
         transformations[0], (x_bas,y_bas),(x_bas + w_bas, y_bas + h_bas), (255, 0, 255), 2)
     cv2.rectangle(
         transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
 
-    if(nbFrame%rapportFps<1):
+    cv2.rectangle(
+        transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+    cv2.rectangle(
+        transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
 
-        ###RECUPERATION SILOUHETTE 
-        (x, y, w, h) = affichageJHaut
-        (x1, y1, w1, h1) = affichageJBas
-        try:
-            crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
-            crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
-            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
-            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
-        except:
-            silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
-            silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
+    ###RECUPERATION SILOUHETTE 
+    (x, y, w, h) = affichageJHaut
+    (x1, y1, w1, h1) = affichageJBas
+    try:
 
-        ###ENREGISTREMENT des silouhettes dans le TABLEAU
-        tableauSortieJHaut.append(silouhetteHaut/255)
-        tableauSortieJBas.append(silouhetteBas/255)
+        # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
+        # crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
+        # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
+        # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
+        silouhetteBas  = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
+        silouhetteHaut = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
+
+
+    except:
+        silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
+        silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
+
+    ###ENREGISTREMENT des silouhettes dans le TABLEAU
+    tableauSortieJHaut.append(silouhetteHaut/255)
+    tableauSortieJBas.append(silouhetteBas/255)
+    
+    ###PREDICTIONS
+
+    
+    #print(prected.shape)
+    #if(len(tableauSortieJBas)>15):
+        #seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+        #(1, 50, 750, 3)
+        #output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         
-        ###PREDICTIONS
 
-        
-        #print(prected.shape)
-        if(len(tableauSortieJBas)>15):
-            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-            #(1, 50, 750, 3)
-            output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
-            
-   
-        #print(prected.shape)
-        if(len(tableauSortieJHaut)>15):
-            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-            output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+    #print(prected.shape)
+    #if(len(tableauSortieJHaut)>15):
+        #seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+        #output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
             
         #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
         
@@ -381,7 +389,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     cv2.imshow("feed", transformations[0])
     #if(devMode):cv2.imshow("feed2", dilated)
-
+    if devMode:cv2.imshow("closing", transformations[3])
     cv2.imshow("JoueurHaut : ", silouhetteHaut)
     cv2.imshow("JoueurBas : ", silouhetteBas)
 
