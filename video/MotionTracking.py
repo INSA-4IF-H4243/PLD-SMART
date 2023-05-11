@@ -29,7 +29,8 @@ cutFrameNB=15#nombre d'images pour un coups
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
-
+y_pred_haut=4
+y_pred_bas=4
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -75,11 +76,15 @@ def englobant(rec1, rec2):
     return rec1
 
 ########REASEAU DE NEURONES:
+
+
 input_shape_model=15*50*50
 output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
-output_name=['coup droit','déplacement','revers','service']
+output_name=['coup droit','déplacement','revers','service','nothing']
+
+#JOUEUR BAS
 tf.random.set_seed(1234) # for consistent results
-model = Sequential(
+model_bas = Sequential(
     [               
         tf.keras.Input(shape = input_shape_model), # 50*50 * 15 = 37500
         Dense(units=16, activation="relu"),
@@ -89,10 +94,27 @@ model = Sequential(
         Dense(units=len(output_y), activation="softmax"),
     ]
 )          
-model.summary()
-model.load_weights('JoueurBas_MulClass_Weights-001--3.69951.hdf5')
+model_bas.summary()
+model_bas.load_weights('JoueurBasTest.hdf5')
 
 
+#JOUEUR HAUT
+tf.random.set_seed(1234) # for consistent results
+model_haut = Sequential(
+    [               
+        tf.keras.Input(shape = input_shape_model), # 50*50 * 15 = 37500
+        Dense(units=16, activation="relu"),
+        Dense(units=32, activation="relu"),
+        Dense(units=64, activation="sigmoid"),
+        Dense(units=128, activation="relu"),
+        Dense(units=len(output_y), activation="softmax"),
+    ]
+)          
+model_haut.summary()         
+model_haut.load_weights('JoueurHautTest.hdf5')
+
+pred_haut=""
+pred_bas=""
 ########TRAITEMENT DE LA VIDEO
 
 #####LECTURE VIDEO
@@ -225,24 +247,35 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
+        ###ENREGISTREMENT des silouhettes dans le TABLEAU
+        tableauSortieJHaut.append(silouhetteHaut/255)
+        tableauSortieJBas.append(silouhetteBas/255)
+        
+        ###PREDICTIONS
+
+        prected_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).flatten()
+        #print(prected.shape)
+        if(prected_bas.shape[0]==37500):
+            pred_bas = model_bas.predict(np.asmatrix(prected_bas))
+            y_pred_bas = np.argmax(pred_bas, axis=1)
+            
+
+        prected_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).flatten()
+        #print(prected.shape)
+        if(prected_haut.shape[0]==37500):
+            pred_haut = model_haut.predict(np.asmatrix(prected_haut))
+            y_pred_haut = np.argmax(pred_haut, axis=1)
+            
+        print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+        
         ###AFFICHAGE 
         
         cv2.imshow("feed", frame1)
         if(devMode):cv2.imshow("feed2", dilated)
 
-        cv2.imshow("JoueurHaut", silouhetteHaut)
-        cv2.imshow("JoueurBas", silouhetteBas)
+        cv2.imshow("JoueurHaut : ", silouhetteHaut)
+        cv2.imshow("JoueurBas : ", silouhetteBas)
 
-        ###ENREGISTREMENT des silouhettes dans le TABLEAU
-        tableauSortieJHaut.append(silouhetteHaut/255)
-        tableauSortieJBas.append(silouhetteBas/255)
-        
-        prected=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).flatten()
-        #print(prected.shape)
-        if(prected.shape[0]==37500):
-            pred = model.predict(np.asmatrix(prected))
-            y_pred = np.argmax(pred, axis=1)
-            print("Predicted labels: ", output_name[int(y_pred)])
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
     frame2 = frame3
