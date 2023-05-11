@@ -2,7 +2,6 @@ import cv2
 import sys
 
 def subtractor(substractor, parameters):
-
         if substractor== "GMG": # slowest
             return cv2.bgsegm.createBackgroundSubtractorGMG(initializationFrames=120,
                                                             decisionThreshold=0.8)
@@ -24,24 +23,24 @@ def subtractor(substractor, parameters):
                                                             maxPixelStability=15*60,
                                                             useHistory=True,
                                                             isParallel=True)
-        else :
+        else:
             print("Invalid substractor")
             sys.exit(0)
 
-def filter(image, filter, parameters):
-
-        if filter == "closing": # dilation followed by erosion
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, parameters["shape"])
-            return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel, iterations=parameters["iterations"])
-        if filter == "opening": # erosion followed by dilation
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, parameters["shape"])
-            return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=parameters["iterations"])
-        if filter == "dilation":
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, parameters["shape"])
-            return cv2.morphologyEx(image, cv2.MORPH_DILATE, kernel, iterations=parameters["iterations"])
-        if filter == "erosion":
+def filter(image, filter, parameters=""):
+        
+        if filter== "closing": # dilation followed by erosion
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+            return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel, iterations=10)
+        if filter== "opening": # erosion followed by dilation
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+            return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
+        if filter== "dilation":
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+            return cv2.morphologyEx(image, cv2.MORPH_DILATE, kernel, iterations=3)
+        if filter== "erosion":
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, parameters["shape"])
             return cv2.morphologyEx(image, cv2.MORPH_ERODE, kernel, iterations=parameters["iterations"])
-        else :
+        else:
             print("Invalid filter")
             sys.exit(0)
