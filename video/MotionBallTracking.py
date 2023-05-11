@@ -251,7 +251,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         balle = minBalle
         balle_detecte = True
         compteur_non_detection = 0
-        print(balle)
         pos_balle = centre(balle)
         tableau_trajectoire_balle.append(pos_balle)
 
@@ -280,7 +279,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                         av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
 
                 if i == len(tableau_trajectoire_balle)-1 :
-                    for j in range(1,no_pos+1) :
+                    for j in range(0,no_pos+1) :
                         tableau_position_balle[i-j] = derniere_pos_balle
             else :
                 derniere_pos_balle = tableau_trajectoire_balle[i]

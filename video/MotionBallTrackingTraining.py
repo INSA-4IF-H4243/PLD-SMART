@@ -11,6 +11,7 @@ import csv
 import os
 import math
 import copy
+import random
 
 ########################PARAMETRES :
 HAUT_VERS_BAS = 1
@@ -311,7 +312,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                         av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
 
                 if i == len(tableau_trajectoire_balle)-1 :
-                    for j in range(1,no_pos+1) :
+                    for j in range(0,no_pos+1) :
                         tableau_position_balle[i-j] = derniere_pos_balle
             else :
                 derniere_pos_balle = tableau_trajectoire_balle[i]
@@ -407,6 +408,38 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 type=int(input())
 
         if (type != -1) : 
+            
+            for i in range(50) :
+                new_trajectoire = []
+                for point in tableau_position_balle :
+                    x = point[0] -7 + random.randrange(14)
+                    y = point[1] -7 + random.randrange(14)
+                    new_trajectoire.append((x,y))
+
+                if trajectoire == 0 and type ==0 : 
+                    new_trajectoire.append(1)
+                elif trajectoire == 0 and type ==1 : 
+                    new_trajectoire.append(2)
+                elif trajectoire == 0 and type ==2 : 
+                    new_trajectoire.append(4)
+                elif trajectoire == 0 and type ==3 : 
+                    new_trajectoire.append(3)
+                elif trajectoire == 1 and type ==0 : 
+                    new_trajectoire.append(9)
+                elif trajectoire == 1 and type ==1 : 
+                    new_trajectoire.append(10)
+                elif trajectoire == 1 and type ==2 : 
+                    new_trajectoire.append(12)
+                elif trajectoire == 1 and type ==3 : 
+                    new_trajectoire.append(11)
+                elif trajectoire == 2 and type ==0 : 
+                    new_trajectoire.append(6)
+                elif trajectoire == 2 and type ==1 : 
+                    new_trajectoire.append(7)
+                else : 
+                    new_trajectoire.append(8)
+                save_trajectoire(new_trajectoire,outPutPathBalle +'/dataset.csv')         
+
             if trajectoire == 0 and type ==0 : 
                 tableau_position_balle.append(1)
             elif trajectoire == 0 and type ==1 : 
@@ -429,8 +462,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 tableau_position_balle.append(7)
             else : 
                 tableau_position_balle.append(8)
-
-            if len(tableau_position_balle) != 46 : print('pas bonne taille')
 
             save_trajectoire(tableau_position_balle, outPutPathBalle +'/dataset.csv')
 
