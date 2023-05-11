@@ -14,13 +14,15 @@ import tensorflow as tf
 import random
 from sklearn.preprocessing import LabelEncoder
 
+from smart.model import ModelJoueurClassique
+
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
+videoPath='dataset/cut-45_vM3Tx4NE.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=7#FPS de la sortie
@@ -80,41 +82,21 @@ def englobant(rec1, rec2):
 
 input_shape_model=15*50*50
 output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
-output_name=['coup droit','déplacement','revers','service','nothing']
+all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
 #JOUEUR BAS
-tf.random.set_seed(1234) # for consistent results
-model_bas = Sequential(
-    [               
-        tf.keras.Input(shape = input_shape_model), # 50*50 * 15 = 37500
-        Dense(units=16, activation="relu"),
-        Dense(units=32, activation="relu"),
-        Dense(units=64, activation="sigmoid"),
-        Dense(units=128, activation="relu"),
-        Dense(units=len(output_y), activation="softmax"),
-    ]
-)          
-model_bas.summary()
-model_bas.load_weights('JoueurBasTest.hdf5')
+model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+print(model_bas.summary_model)
+#model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
 #JOUEUR HAUT
-tf.random.set_seed(1234) # for consistent results
-model_haut = Sequential(
-    [               
-        tf.keras.Input(shape = input_shape_model), # 50*50 * 15 = 37500
-        Dense(units=16, activation="relu"),
-        Dense(units=32, activation="relu"),
-        Dense(units=64, activation="sigmoid"),
-        Dense(units=128, activation="relu"),
-        Dense(units=len(output_y), activation="softmax"),
-    ]
-)          
-model_haut.summary()         
-model_haut.load_weights('JoueurHautTest.hdf5')
+model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+print(model_haut.summary_model)        
+#model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
-pred_haut=""
-pred_bas=""
+output_bas="nothing"
+output_haut="nothing"
 ########TRAITEMENT DE LA VIDEO
 
 #####LECTURE VIDEO
@@ -253,24 +235,23 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         
         ###PREDICTIONS
 
-        prected_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).flatten()
+        
         #print(prected.shape)
-        if(prected_bas.shape[0]==37500):
-            pred_bas = model_bas.predict(np.asmatrix(prected_bas))
-            y_pred_bas = np.argmax(pred_bas, axis=1)
+        if(len(tableauSortieJBas)>15):
+            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+            output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
             
-
-        prected_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).flatten()
+   
         #print(prected.shape)
-        if(prected_haut.shape[0]==37500):
-            pred_haut = model_haut.predict(np.asmatrix(prected_haut))
-            y_pred_haut = np.argmax(pred_haut, axis=1)
+        if(len(tableauSortieJHaut)>15):
+            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+            output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
             
         #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
         
         ###AFFICHAGE 
-        frame1=cv2.putText(frame1, output_name[int(y_pred_haut)], (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
-        frame1=cv2.putText(frame1, output_name[int(y_pred_bas)], (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+        frame1=cv2.putText(frame1, output_haut, (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+        frame1=cv2.putText(frame1, output_bas, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
 
         cv2.imshow("feed", frame1)
         if(devMode):cv2.imshow("feed2", dilated)
