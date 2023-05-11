@@ -201,7 +201,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
             if area > 2000 : continue
-            if area > 300 and not  (w/h>4 or h/w>4):
+            if area > 300 and not  (h<20 or w<20):
                 tab_rec.append((x, y, w, h))
             else:
                 ball_rec.append((x, y, w, h))
