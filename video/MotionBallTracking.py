@@ -6,7 +6,8 @@ from smart.processor import ImageProcessor
 from smart.video import Video, Image
 import math
 import copy
-import util
+import util 
+from smart.model import ModelBalle
 
 ########################PARAMETRES :
 
