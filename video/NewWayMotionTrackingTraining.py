@@ -3,19 +3,9 @@ import cv2
 import cv2
 import numpy as np
 from smart.processor import ImageProcessor
-from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
-
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
-from keras.callbacks import ModelCheckpoint
-from keras.optimizers import Adam
-import tensorflow as tf
-import random
-from sklearn.preprocessing import LabelEncoder
-
-from smart.model import ModelJoueurClassique
-
+from pynput import keyboard
+import time
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
@@ -23,14 +13,29 @@ affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='dataset/video.mp4'#chemin de la video
-fpsOutput=7#FPS de la sortie
-videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+outPutPathJHaut='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 2
+outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
+fpsOutput=25#FPS de la sortie
 cutFrameNB=15#nombre d'images pour un coups
-#taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
+videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+
+#taille de lentree du machine learning pour une seconde= fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
 tableauSortieJBas=[]
-y_pred_haut=4
-y_pred_bas=4
+
+tabCoups=["problemeDetection/PasClair...=>Poubelle","coup droit","revers","deplacement","service","immobile"]
+k_pressed=False
+i=0
+def on_press(key):
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+    if key==keyboard.Key.space:
+
+        global k_pressed
+        k_pressed=True
+
+key_listener = keyboard.Listener(on_press=on_press)
+key_listener.start()
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -75,37 +80,21 @@ def englobant(rec1, rec2):
         return rec3
     return rec1
 
-########REASEAU DE NEURONES:
+########################
 
-
-input_shape_model=15*50*50
-output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
-all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
-
-#JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
-print(model_bas.summary_model)
-#model_bas.load_model_from_path('JoueurBasTest.hdf5')
-
-
-#JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
-print(model_haut.summary_model)        
-#model_haut.load_model_from_path('JoueurHautTest.hdf5')
-
-output_bas="nothing"
-output_haut="nothing"
 ########TRAITEMENT DE LA VIDEO
 
-#####LECTURE VIDEO
+#####LECTURE
+#cap = cv2.VideoCapture('rv_j1/cut6.mp4')
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree
 rapportFps=fps/fpsOutput
 imageProcessor = ImageProcessor()
-
+countSave=0
 ret1, frame1 = cap.read()
 ret2, frame2 = cap.read()
 ret3, frame3 = cap.read()
+
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame1,videoResize)
 milieu_y=int(len(frame1)/2)
@@ -118,6 +107,7 @@ joueurs=[(milieu_x-25,milieu_y-75,50,50),(milieu_x-25,milieu_y+75,50,50)]
 nbFrame=0
 print("...")
 while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
+    #print(frame3)
     ###AJUSTEMENT TAILLE
     frame1=cv2.resize(frame1,videoResize)
     frame2=cv2.resize(frame2,videoResize)
@@ -200,9 +190,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             joueurs[0] = minJoueur0
         if b1:
             joueurs[1] = minJoueur1
-    
+
     ###DESSIN DU CONTOUR DES JOUEURS
     if(nbFrame%rapportFps<1):
+
+        countSave+=1
 
         ###CREATION CONTOUR AVEC DECALAGE
         decalageX = int(milieu_x/30)
@@ -210,10 +202,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         
         (x, y, w, h) = joueurs[0] #Joueur 0 du haut
         affichageJHaut=(max(0,x-decalageX), max(0,y-decalageY), w+2*decalageX, h+2*decalageY)
-        
+        cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
         (x1, y1, w1, h1) = joueurs[1] #Joueur 1 du bas
         affichageJBas=(x1-decalageX, y1-decalageY, w1+2*decalageX, h1+2*decalageY)
-        
+        cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
 
         ###RECUPERATION SILOUHETTE 
         (x, y, w, h) = affichageJHaut
@@ -227,39 +219,51 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
+
+        ###AFFICHAGE 
+        
+        cv2.imshow("feed", frame1)
+        if(devMode):cv2.imshow("feed2", dilated)
+
+        cv2.imshow("JoueurHaut", silouhetteHaut)
+        cv2.imshow("JoueurBas", silouhetteBas)
+
+        ##ENREGISTREMENT
+        if(k_pressed==True):
+            if i==0:
+                print("debut de la séquence: appuyez sur entree")
+                input()
+                i=1
+                k_pressed=False
+            elif i==1:
+                print("dernier coup du joueur en haut:")
+                for i in range(len(tabCoups)):
+                    print(i," : ",tabCoups[i])
+                coupJHaut=int(input())
+
+                print("dernier coup du joueur en bas:")
+                for i in range(len(tabCoups)):
+                    print(i," : ",tabCoups[i])
+                coupJBas=int(input())
+
+                if(coupJHaut):
+                    x_haut = np.linspace(0, len(tableauSortieJHaut)-1, 15,dtype=int)
+                    print(x_haut)
+                    imageProcessor.save_ImageList(tableauSortieJHaut[x_haut],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+                if(coupJBas):
+                    x_bas= np.linspace(0, len(tableauSortieJBas)-1, 15)
+                    imageProcessor.save_ImageList(tableauSortieJBas[x_bas],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+                
+                tableauSortieJHaut=[]
+                tableauSortieJBas=[]
+                print("\nséquence enregistrée, reprise...\n")
+                k_pressed=False
+                i=0
         ###ENREGISTREMENT des silouhettes dans le TABLEAU
         tableauSortieJHaut.append(silouhetteHaut/255)
         tableauSortieJBas.append(silouhetteBas/255)
-        
-        ###PREDICTIONS
 
-        
-        #print(prected.shape)
-        if(len(tableauSortieJBas)>15):
-            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-            output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
-            
-   
-        #print(prected.shape)
-        if(len(tableauSortieJHaut)>15):
-            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-            output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
-            
-        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
-        
-    ###AFFICHAGE 
 
-    cv2.rectangle(frame1, (affichageJHaut[0], affichageJHaut[1]), (affichageJHaut[0]+affichageJHaut[2], affichageJHaut[1]+affichageJHaut[3]), (0, 200, 0), 2)
-    cv2.rectangle(frame1, (affichageJBas[0], affichageJBas[1]), (affichageJBas[0]+affichageJBas[2], affichageJBas[1]+affichageJBas[3]), (0, 255, 0), 2)
-    
-    frame1=cv2.putText(frame1, output_haut, (affichageJHaut[0], affichageJHaut[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
-    frame1=cv2.putText(frame1, output_bas, (affichageJBas[0], affichageJBas[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
-
-    cv2.imshow("feed", frame1)
-    if(devMode):cv2.imshow("feed2", dilated)
-
-    cv2.imshow("JoueurHaut : ", silouhetteHaut)
-    cv2.imshow("JoueurBas : ", silouhetteBas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     frame1 = frame2
@@ -273,9 +277,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 cv2.destroyAllWindows()
 cap.release()
 
-###ENREGISTREMENT DONNEES:
 
-# imageProcessor.save_ImageList(tableauSortieJHaut,outPutPathJHaut,enregistrementImage)
-# imageProcessor.save_ImageList(tableauSortieJBas,outPutPathJBas,enregistrementImage)
 
 print("fin")
