@@ -13,8 +13,8 @@ affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='dataset/video.mp4'#chemin de la video
-outPutPathJHaut='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 1
-outPutPathJBas='/46840-47020'#chemin d'enregistrement de la silouhette du Joueur 2
+outPutPathJHaut='/newTest2'#chemin d'enregistrement de la silouhette du Joueur 1
+outPutPathJBas='/newTest2'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
 fpsOutput=25#FPS de la sortie
 cutFrameNB=15#nombre d'images pour un coups
@@ -248,11 +248,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
                 if(coupJHaut):
                     x_haut = np.linspace(0, len(tableauSortieJHaut)-1, 15,dtype=int)
-                    print(x_haut)
-                    imageProcessor.save_ImageList(tableauSortieJHaut[x_haut],outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+                    x_haut_linspace=np.array(np.array(tableauSortieJHaut)[x_haut]).tolist()
+                    imageProcessor.save_ImageList(x_haut_linspace,outPutPath+"JHaut/"+tabCoups[coupJHaut]+outPutPathJHaut+str(nbFrame),enregistrementImage)
                 if(coupJBas):
-                    x_bas= np.linspace(0, len(tableauSortieJBas)-1, 15)
-                    imageProcessor.save_ImageList(tableauSortieJBas[x_bas],outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJHaut+str(nbFrame),enregistrementImage)
+                    x_bas = np.linspace(0, len(tableauSortieJBas)-1, 15,dtype=int)
+                    x_bas_linspace=np.array(np.array(tableauSortieJBas)[x_bas]).tolist()
+                    imageProcessor.save_ImageList(x_bas_linspace,outPutPath+"JBas/"+tabCoups[coupJBas]+outPutPathJBas+str(nbFrame),enregistrementImage)
                 
                 tableauSortieJHaut=[]
                 tableauSortieJBas=[]
