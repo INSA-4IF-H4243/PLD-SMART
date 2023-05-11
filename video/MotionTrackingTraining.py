@@ -17,8 +17,8 @@ videoPath='dataset/services.mp4'#chemin de la video
 outPutPathJHaut='/GG'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/GG'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
-fpsOutput=15#FPS de la sortie
-cutFrameNB=15#nombre d'images pour un coups
+fpsOutput=30#FPS de la sortie
+cutFrameNB=30#nombre d'images pour un coups
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 
 #taille de lentree du machine learning pour une seconde= fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
