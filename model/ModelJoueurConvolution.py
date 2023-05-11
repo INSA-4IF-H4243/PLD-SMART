@@ -302,7 +302,7 @@ class ModelJoueurConvolution:
             Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
             Il faut reshape la séquence d'images en (n, 50, 1500, 3) pour n-vidéos de 15 frames
         y: np.array
-            all possible output labels (Ex: ['coup 'droit', 'revers', 'service', 'deplacement'])
+            all possible output labels (Ex: ['coup droit', 'revers', 'service', 'deplacement'])
 
         Returns
         -------
