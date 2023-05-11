@@ -24,8 +24,8 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/partie2.mp4'#chemin de la video
+PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
+videoPath='dataset/clip/partie1.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -201,24 +201,40 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     )
     tab_rec = []
     ball_rec =[]
+    a_left=(ymax-ymin)/(150)
+    b_left=ymax-a_left*xmax
+
+    a_right=(ymin-ymax)/(150)
+    b_right=ymax-a_right*xmin
+    cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
+    cv2.line(transformations[0],(xmax-150, int(a_left*(xmax-150)+b_left)), (xmax, int(a_left*(xmax)+b_left)), (255, 137, 0), 2)
+    cv2.line(transformations[0],(xmin, int(a_right*(xmin)+b_right)),(xmin+150, int(a_right*(xmin+150)+b_right)), (137, 255, 0), 2)
+    
+
     for contour in contours:
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
-            if area > 1500 : continue
-            if area > 300:
+
+            rec_c=( x, y, w, h )
+            x_c, y_c = centre(rec_c)
+            x_c=int(x_c)
+            y_c=int(y_c)
+            if area > 2000 : continue
+            if area > 300 and (not  (h<20 or w<20)) and (y_c+ymin)>a_left*(x_c+xmin)+b_left and (y_c+ymin)>a_right*(x_c+xmin)+b_right:
+                cv2.rectangle(transformations[0], (x_c+xmin, y_c+ymin), (x_c+xmin+5, y_c+ymin+5), (0, 0, 255), 2)
                 tab_rec.append((x, y, w, h))
             elif area < 100:
                 ball_rec.append((x, y, w, h))
 
-    cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
+
 
     ###AFFICHAGE DE TOUS LES CONTOURS
     
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
+            cv2.rectangle(transformations[0], (x+xmin, y+ymin), (x+w+xmin, y+h+ymin), (0, 127, 127), 2)
     #print(len(tab_rec))
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
