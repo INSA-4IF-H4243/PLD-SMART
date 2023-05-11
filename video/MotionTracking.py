@@ -23,7 +23,7 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
+PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
 videoPath='dataset/services.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
@@ -150,7 +150,7 @@ parameters_dilation = {
     "substractor": {"history": 200, "threshold": 200},
 }
 parameters_silouhette = {
-    "filter": {"iterations": 2, "shape": (2, 2)},  # brush size
+    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
 
@@ -362,12 +362,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         
-        silouhetteBas  = transformations[3][joueurs[1][1]-10:joueurs[1][1] + joueurs[1][3]+20,joueurs[1][0]-10:joueurs[1][0] + joueurs[1][2]+20]
+        silouhetteBas  = transformations[3][joueurs[1][1]-15:joueurs[1][1] + joueurs[1][3]+30,joueurs[1][0]-15:joueurs[1][0] + joueurs[1][2]+30]
         silouhetteBas=np.ceil(silouhetteBas/255)*255
         silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
         silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
 
-        silouhetteHaut = transformations[3][joueurs[0][1]-10:joueurs[0][1] + joueurs[0][3]+20,joueurs[0][0]-10:joueurs[0][0] + joueurs[0][2]+20]
+        silouhetteHaut = transformations[3][joueurs[0][1]-15:joueurs[0][1] + joueurs[0][3]+30,joueurs[0][0]-15:joueurs[0][0] + joueurs[0][2]+30]
         silouhetteHaut=np.ceil(silouhetteHaut/255)*255
         silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
         silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
