@@ -23,7 +23,7 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
+PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='dataset/clip/2.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
@@ -214,7 +214,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         for rec in tab_rec:
             (x, y, w, h) = rec
             cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
-    print(len(tab_rec))
+    #print(len(tab_rec))
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -386,18 +386,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     
     #print(prected.shape)
-    #if(len(tableauSortieJBas)>15):
-        #seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-        #(1, 50, 750, 3)
-        #output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+    if(len(tableauSortieJBas)>15):
+        seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+        output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         
-
     #print(prected.shape)
-    #if(len(tableauSortieJHaut)>15):
-        #seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-        #output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
-            
-        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+    if(len(tableauSortieJHaut)>15):
+        seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+        output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
         
     ###AFFICHAGE 
     
