@@ -18,5 +18,5 @@ setup(name='smart',
     install_requires=['tensorflow', 'numpy', 'scipy',
                       'matplotlib', 'opencv-python',
                       'pynput', 'cvzone', 'mediapipe',
-                      'scikit-learn']
+                      'scikit-learn', 'ffmpeg-python']
     )
