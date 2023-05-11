@@ -1,9 +1,8 @@
 import cv2
 #!pip install .
 import cv2
-from smart.processor import ImageProcessor
-from smart.processor import ImageProcessor, VideoProcessor
-from smart.video import Video, Image
+from processor import ImageProcessor, VideoProcessor
+from video import Video, Image
 
 ########################PARAMETRES :
 

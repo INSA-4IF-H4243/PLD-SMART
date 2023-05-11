@@ -1,4 +1,4 @@
-from smart.video import Video
+from video import Video
 import numpy as np
 import os
 

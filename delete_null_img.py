@@ -1,5 +1,5 @@
 import os
-from smart.video import Image
+from video import Image
 import subprocess
 import sys
 import numpy as np

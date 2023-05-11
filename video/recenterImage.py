@@ -2,8 +2,8 @@ import cv2
 #!pip install .
 import cv2
 import numpy as np
-from smart.processor import ImageProcessor
-from smart.video import Video, Image
+from processor import ImageProcessor
+from video import Video, Image
 from pynput.keyboard import Key, Listener
 from pynput import keyboard
 from matplotlib import pyplot as plt
