@@ -159,7 +159,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transformations.append(cv2.resize(frame3, (600, 300)))
     # cv2.imshow("frame", transformations[-1])
 
-    transformations.append(transformations[-1][25:275, 100:500])
+    transformations.append(transformations[-1][25:275, 100:600])
     # cv2.imshow("test", transformations[-1])
 
     transformations.append(cv2.cvtColor(transformations[-1], cv2.COLOR_BGR2GRAY))
@@ -193,10 +193,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 )  # players
             else:
                 cv2.rectangle(
-                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 0), 1
+                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 0), 2
                 )  # ball
 
-    cv2.rectangle(transformations[0], (50, 25), (550, 275), (255, 0, 0), 1)
+    cv2.rectangle(transformations[0], (50, 25), (550, 275), (255, 255, 0), 1)
     
 
 
@@ -211,35 +211,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        #if devMode:cv2.rectangle(frame3, (x, y), (x+w, y+h), (0, 255, 255), 2)
-
-        #élimination des contours dont la forme est clairement differente d'un tennisman
-        
-        #if(contour_taille(rec_base)>1000):continue
-
-        #if(rec_base[2]/rec_base[3]>4 or rec_base[3]/rec_base[2]>4):continue
-
-        #fusion des contours proches
-        # if(contour_taille(rec_base)<100):
-        #     for rec in ball_rec[:]:         
-        #         if superposition(rec_base, rec):
-        #             new_rec = englobant(rec_base, rec)
-        #             if new_rec != rec_base:
-        #                 ball_rec.remove(rec)
-        #     if contour_taille(new_rec) > 10 : ball_rec.append(new_rec)
-
-        # else :
-        #     for rec in tab_rec[:]:         
-        #         up_low_rec = rec[1] < milieu_y*2/3
-        #         if superposition(rec_base, rec) and (up_low_base == up_low_rec or rec[3] < 30 ) :
-        #             new_rec = englobant(rec_base, rec)
-        #             if new_rec != rec_base:
-        #                 tab_rec.remove(rec)
-        #                 if rec in ball_rec : ball_rec.remove(rec)
-        #     tab_rec.append(new_rec)
-        #     if new_rec in ball_rec : 
-        #         if new_rec[2]>30 or new_rec[3]>75 : ball_rec.remove(new_rec)
-        #         else : ball_rec.append(new_rec)
         tab_rec.append(new_rec)
     ###AFFICHAGE DE TOUS LES CONTOURS
     
