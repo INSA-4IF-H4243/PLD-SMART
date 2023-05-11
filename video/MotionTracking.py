@@ -25,7 +25,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/partie1.mp4'#chemin de la video
+videoPath='dataset/partie2.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -388,10 +388,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     transfomations_joueurs = []
     transfomations_joueurs.append(cv2.resize(frame3, (800,400)))
-    transfomations_joueurs.append(transformations[-1][ymin:ymax, xmin:xmax])
-    transfomations_joueurs.append(cv2.cvtColor(transformations[-1], cv2.COLOR_BGR2GRAY))
-    transfomations_joueurs.append(subtractor.apply(transformations[-1]))
-    transfomations_joueurs.append(util.filter(transformations[-1], "closing", parameters_joueurs["filter"]))
+    transfomations_joueurs.append(transfomations_joueurs[-1][ymin:ymax, xmin:xmax])
+    transfomations_joueurs.append(cv2.cvtColor(transfomations_joueurs[-1], cv2.COLOR_BGR2GRAY))
+    transfomations_joueurs.append(subtractor.apply(transfomations_joueurs[-1]))
+    transfomations_joueurs.append(util.filter(transfomations_joueurs[-1], "closing", parameters_joueurs["filter"]))
 
     try:
 
