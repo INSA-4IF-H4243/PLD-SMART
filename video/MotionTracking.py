@@ -365,10 +365,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         silouhetteBas  = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
         silouhetteBas=np.ceil(silouhetteBas/255)*255
         silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
+        silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
+
         silouhetteHaut = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
         silouhetteHaut=np.ceil(silouhetteHaut/255)*255
         silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
-
+        silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
     except:
         silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
         silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
