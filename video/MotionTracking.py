@@ -150,7 +150,7 @@ parameters_dilation = {
     "substractor": {"history": 200, "threshold": 200},
 }
 parameters_silouhette = {
-    "filter": {"iterations": 10, "shape": (3, 3)},  # brush size
+    "filter": {"iterations": 2, "shape": (2, 2)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
 
@@ -361,10 +361,13 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
-        silouhetteBas  = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
-        silouhetteBas  = util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
-        silouhetteHaut = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
-        silouhetteBas  = util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
+        
+        silouhetteBas  = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
+        silouhetteBas=np.ceil(silouhetteBas/255)*255
+        silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
+        silouhetteHaut = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
+        silouhetteHaut=np.ceil(silouhetteHaut/255)*255
+        silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
 
     except:
         silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
