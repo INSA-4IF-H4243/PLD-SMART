@@ -6,6 +6,7 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
+from smart.model import ModelBalle
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
@@ -24,7 +25,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/services.mp4'#chemin de la video
+videoPath='dataset/partie2.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -132,23 +133,18 @@ balle = (milieu_x-25,milieu_y,50,50)
 pos_balle = centre(balle)
 pos_precedent = pos_balle
 balle_detecte = False
-rayon_detection = 5
+rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
+model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
 
 factor = 0.49
-parameters = {
-    "filter": {"iterations": 10, "shape": (5, 5)},  # brush size
-    "substractor": {"history": 200, "threshold": 200},
-}
-parameters_dilation = {
-    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
-    "substractor": {"history": 200, "threshold": 200},
-}
+parameters = {"substractor": {"history": 100, "threshold": 400},}
+
 parameters_silouhette = {
     "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
@@ -179,8 +175,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     # cv2.imshow("gray", transformations[-1])
 
     transformations.append(subtractor.apply(transformations[-1]))
-    transformations.append(util.filter(transformations[-1], "closing",parameters["filter"]))
-    transformations.append(util.filter(transformations[-1], "dilation",parameters_dilation["filter"]))  
+    transformations.append(util.filter(transformations[-1], "closing"))
+    transformations.append(util.filter(transformations[-1], "dilation"))
+
+    cv2.imshow("gray", transformations[-1])
 
     
 
@@ -200,10 +198,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
-            if area > 2000 : continue
+            if area > 1500 : continue
             if area > 300:
                 tab_rec.append((x, y, w, h))
-            else:
+            elif area < 100:
                 ball_rec.append((x, y, w, h))
 
     cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
@@ -214,7 +212,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         for rec in tab_rec:
             (x, y, w, h) = rec
             cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
-    print(len(tab_rec))
+    #print(len(tab_rec))
+
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -233,8 +232,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             #joueur du haut          
             if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
                 #if distance2(joueurs[0],rec) < 5*5:
-                    if devMode:print("joueur0")
-                    if devMode:print(similarite(joueurs[0],rec))
+                    # if devMode:print("joueur0")
+                    # if devMode:print(similarite(joueurs[0],rec))
                     minJoueur0=rec
                     b0 = 1
             #joueur du bas
@@ -253,7 +252,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     if balle_detecte:
         for rec in ball_rec :
-            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20 and distance2(balle,rec) > 1 :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 50 and distance2(balle,rec) > 1 :
                 minBalle=rec  
                 bBalle = 1
         if bBalle : balle = minBalle
@@ -263,7 +262,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if not balle_detecte:
         if compteur_non_detection < limite :
             for rec in ball_rec :
-                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20+rayon_detection*compteur_non_detection) :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 50+rayon_detection*(compteur_non_detection+1)) :
                     minBalle=rec  
                     bBalle = 1
                     b = True
@@ -320,6 +319,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                             y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
                             tableau_position_balle[i-j] = (x,y)
                 no_pos = 0
+
+        tab_prediction = []
+        for point in tableau_position_balle :
+            tab_prediction.append(point[0])
+            tab_prediction.append(point[1])
+        print("ici")
+        print(len(tableau_position_balle))
+        resultat = model_balle.predict(tableau_position_balle)
+        print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(
@@ -403,9 +411,9 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     cv2.imshow("feed", transformations[0])
     #if(devMode):cv2.imshow("feed2", dilated)
-    if devMode:cv2.imshow("closing", transformations[3])
-    cv2.imshow("JoueurHaut : ", silouhetteHaut)
-    cv2.imshow("JoueurBas : ", silouhetteBas)
+    # if devMode:cv2.imshow("closing", transformations[3])
+    # cv2.imshow("JoueurHaut : ", silouhetteHaut)
+    # cv2.imshow("JoueurBas : ", silouhetteBas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     ret3, frame3 = cap.read()

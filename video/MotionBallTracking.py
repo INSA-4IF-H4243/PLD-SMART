@@ -13,12 +13,15 @@ from smart.model import ModelBalle
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='dataset/partie2.mp4'#chemin de la video
+PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
+videoPath='dataset/clip_usopen.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
-videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
+
+output_bas="nothing"
+output_haut="nothing"
 
 #taille de lentree du machine learning = fpsOutput * [PixelSizeOutput * PixelSizeOutput] (20*20*20=8000 pixels noir ou blanc)
 tableauSortieJHaut=[]
@@ -119,6 +122,11 @@ factor = 0.49
 
 parameters = {"substractor": {"history": 100, "threshold": 500}}
 
+parameters_silouhette = {
+    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+
 subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
 subtractor = util.subtractor(subtractors[2], parameters["substractor"])
 
@@ -143,9 +151,9 @@ while exist:
     # cv2.imshow("gray", transformations[-1])
 
     transformations.append(subtractor.apply(transformations[-1]))
-
+    #cv2.imshow("sub", transformations[-1])
     transformations.append(util.filter(transformations[-1], "closing"))
-    cv2.imshow("closing", transformations[-1])
+    #cv2.imshow("closing", transformations[-1])
     transformations.append(util.filter(transformations[-1], "dilation"))  
     cv2.imshow("gray", transformations[-1])
 
@@ -274,10 +282,6 @@ while exist:
             tab_prediction.append(point[0])
             tab_prediction.append(point[1])
 
-        # print(tab_prediction)
-        # resultat = int(model_balle.predict(tab_prediction))
-        # print(liste_trajectoires[resultat-1])
-
     for joueur in joueurs :
         cv2.rectangle(
                     transformations[0], (joueur[0] + xmin - 10, joueur[1] + ymin - 10), (joueur[0] + xmin + joueur[2], joueur[1] + ymin + joueur[3]), (0, 0, 255), 2
@@ -286,10 +290,88 @@ while exist:
     if balle_detecte : 
         cv2.rectangle(
                     transformations[0], (balle[0] + xmin - 10, balle[1] + ymin - 10), (balle[0] + xmin + balle[2], balle[1] + ymin + balle[3]), (0, 255, 0), 2
-                )  # ball        
+                )  # ball 
+
+
+    x_bas=round(joueurs[1][0] + xmin - 10)
+    y_bas=round(joueurs[1][1] + ymin - 10)
+    w_bas=round(joueurs[1][0] + xmin + joueurs[1][2] - x_bas)
+    h_bas=round(joueurs[1][1] + ymin + joueurs[1][3] - y_bas)
+    affichageJBas=(x_bas, y_bas, w_bas, h_bas)
+
+    x_haut=round(joueurs[0][0] + xmin - 10)
+    y_haut=round(joueurs[0][1] + ymin - 10)
+    w_haut=round(joueurs[0][0] + xmin + joueurs[0][2] - x_haut)
+    h_haut=round(joueurs[0][1] + ymin + joueurs[0][3] - y_haut)
+    affichageJHaut=(x_haut, y_haut, w_haut, h_haut)
+    ###DESSIN DU CONTOUR DES JOUEURS)
+    cv2.rectangle(
+        transformations[0], (x_bas,y_bas),(x_bas + w_bas, y_bas + h_bas), (255, 0, 255), 2)
+    cv2.rectangle(
+        transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
+
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
+
+    ###RECUPERATION SILOUHETTE 
+    (x, y, w, h) = affichageJHaut
+    (x1, y1, w1, h1) = affichageJBas
+    try:
+
+        # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
+        # crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
+        # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
+        # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
+        
+        silouhetteBas  = transformations[3][joueurs[1][1]-15:joueurs[1][1] + joueurs[1][3]+30,joueurs[1][0]-15:joueurs[1][0] + joueurs[1][2]+30]
+        silouhetteBas=np.ceil(silouhetteBas/255)*255
+        silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
+        silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
+
+        silouhetteHaut = transformations[3][joueurs[0][1]-15:joueurs[0][1] + joueurs[0][3]+30,joueurs[0][0]-15:joueurs[0][0] + joueurs[0][2]+30]
+        silouhetteHaut=np.ceil(silouhetteHaut/255)*255
+        silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
+        silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
+    except:
+        silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
+        silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
+
+    ###ENREGISTREMENT des silouhettes dans le TABLEAU
+    tableauSortieJHaut.append(silouhetteHaut/255)
+    tableauSortieJBas.append(silouhetteBas/255)
+    
+    ###PREDICTIONS
+
+    
+    #print(prected.shape)
+    #if(len(tableauSortieJBas)>15):
+        #seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+        #(1, 50, 750, 3)
+        #output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+        
+
+    #print(prected.shape)
+    #if(len(tableauSortieJHaut)>15):
+        #seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+        #output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+            
+        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+        
+    ###AFFICHAGE 
+    
+    frame1=cv2.putText(transformations[0], output_haut, (affichageJHaut[0], affichageJHaut[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+    frame1=cv2.putText(transformations[0], output_bas, (affichageJBas[0], affichageJBas[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+
+
+
 
     cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
     cv2.imshow("frame", transformations[0])
+    if devMode:cv2.imshow("closing", transformations[3])
+    cv2.imshow("JoueurHaut : ", silouhetteHaut)
+    cv2.imshow("JoueurBas : ", silouhetteBas)
 
     exist, frame = capture.read()
     if cv2.waitKey(1) & 0xFF == ord("q"):
