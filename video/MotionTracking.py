@@ -166,12 +166,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     # cv2.imshow("gray", transformations[-1])
 
     transformations.append(subtractor.apply(transformations[-1]))
-    cv2.imshow("mask", transformations[-1])
+    if devMode:cv2.imshow("mask", transformations[-1])
 
     transformations.append(
         util.filter(transformations[-1], "closing", parameters["filter"])
     )
-    cv2.imshow("closing", transformations[-1])
+    if devMode:cv2.imshow("closing", transformations[-1])
 
     # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
     # cv2.imshow("dilation", transformations[-1])
@@ -192,8 +192,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                     transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 0, 255), 1
                 )  # players
             else:
-                if devMode:cv2.rectangle(
-                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 0), 2
+                cv2.rectangle(
+                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 255), 2
                 )  # ball
 
     cv2.rectangle(transformations[0], (50, 25), (550, 275), (255, 255, 0), 1)
@@ -264,8 +264,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         try:
             crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
             crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
-            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)  
-            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (PixelSizeOutput, PixelSizeOutput), interpolation=cv2.INTER_BITS)
+            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(39, 52), interpolation=cv2.INTER_LINEAR)  
+            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (39, 52), interpolation=cv2.INTER_LINEAR)
         except:
             silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
