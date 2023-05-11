@@ -24,7 +24,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip_usopen.mp4'#chemin de la video
+videoPath='dataset/services.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -225,8 +225,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             joueurs[1]=tab_rec[0]
 
     else:                       #Sinon on prend les contours les plus proches des anciens contours identifiés comme ceux des joueurs (=tracking)
-        minJoueur0=(milieu_x-25,milieu_y-75,50,50)
-        minJoueur1=(milieu_x-25,milieu_y+75,50,50)
+        minJoueur0=(9999,9999,9999,9999)
+        minJoueur1=(9999,9999,9999,9999)
         b0 = 0
         b1 = 0
         for rec in tab_rec: 
@@ -347,10 +347,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     cv2.rectangle(
         transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
 
-    cv2.rectangle(
-        transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
-    cv2.rectangle(
-        transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+    # cv2.rectangle(
+    #     transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
 
     ###RECUPERATION SILOUHETTE 
     (x, y, w, h) = affichageJHaut
@@ -362,12 +362,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         
-        silouhetteBas  = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
+        silouhetteBas  = transformations[3][joueurs[1][1]-10:joueurs[1][1] + joueurs[1][3]+20,joueurs[1][0]-10:joueurs[1][0] + joueurs[1][2]+20]
         silouhetteBas=np.ceil(silouhetteBas/255)*255
         silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
         silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
 
-        silouhetteHaut = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
+        silouhetteHaut = transformations[3][joueurs[0][1]-10:joueurs[0][1] + joueurs[0][3]+20,joueurs[0][0]-10:joueurs[0][0] + joueurs[0][2]+20]
         silouhetteHaut=np.ceil(silouhetteHaut/255)*255
         silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
         silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
