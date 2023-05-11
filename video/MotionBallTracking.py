@@ -1,7 +1,6 @@
 #!pip install .
 import cv2
 import numpy as np
-import ffmpeg
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
 import math
@@ -15,7 +14,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/partie1.mp4'#chemin de la video
+videoPath='dataset/partie2.mp4'#chemin de la video
 outPutPathJHaut='img/cd_j133/cut/jHaut'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 fpsOutput=20#FPS de la sortie
@@ -26,6 +25,11 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 tableau_position_balle = []
 tableau_trajectoire_balle = []
+
+liste_trajectoires = ['croise court', 'croise long', 'croise amortie', 'croise lobe',
+                      'long de ligne court', 'long de ligne long', 'long de ligne amortie',
+                      'long de ligne lobe', 'centre court', 'centre long', 'centre amortie',
+                      'centre lobe']
 
 ########################METHODES TRAITEMENT CONTOURS :
 
@@ -103,15 +107,17 @@ balle = (milieu_x-25,milieu_y,50,50)
 pos_balle = centre(balle)
 pos_precedent = pos_balle
 balle_detecte = False
-rayon_detection = 5
+rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
+model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
+
 
 ############################################################
 
 factor = 0.49
 
-parameters = {"substractor": {"history": 200, "threshold": 200}}
+parameters = {"substractor": {"history": 100, "threshold": 500}}
 
 subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
 subtractor = util.subtractor(subtractors[2], parameters["substractor"])
@@ -139,6 +145,7 @@ while exist:
     transformations.append(subtractor.apply(transformations[-1]))
 
     transformations.append(util.filter(transformations[-1], "closing"))
+    cv2.imshow("closing", transformations[-1])
     transformations.append(util.filter(transformations[-1], "dilation"))  
     cv2.imshow("gray", transformations[-1])
 
@@ -194,7 +201,7 @@ while exist:
 
     if balle_detecte:
         for rec in ball_rec :
-            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20 and distance2(balle,rec) > 1 :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 30 :
                 minBalle=rec  
                 bBalle = 1
         if bBalle : balle = minBalle
@@ -204,7 +211,7 @@ while exist:
     if not balle_detecte:
         if compteur_non_detection < limite :
             for rec in ball_rec :
-                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20+rayon_detection*compteur_non_detection) :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 30+rayon_detection*(compteur_non_detection+1)) :
                     minBalle=rec  
                     bBalle = 1
                     b = True
@@ -261,6 +268,15 @@ while exist:
                             y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
                             tableau_position_balle[i-j] = (x,y)
                 no_pos = 0
+
+        tab_prediction = []
+        for point in tableau_position_balle :
+            tab_prediction.append(point[0])
+            tab_prediction.append(point[1])
+
+        # print(tab_prediction)
+        # resultat = int(model_balle.predict(tab_prediction))
+        # print(liste_trajectoires[resultat-1])
 
     for joueur in joueurs :
         cv2.rectangle(
