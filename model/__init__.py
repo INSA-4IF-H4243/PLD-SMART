@@ -1,2 +1,3 @@
 from .ModelJoueurClassique import ModelJoueurClassique
 from .ModelJoueurConvolution import ModelJoueurConvolution
+from .ModelBalle import ModelBalle

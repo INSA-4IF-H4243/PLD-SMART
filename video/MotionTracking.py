@@ -13,17 +13,18 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 import tensorflow as tf
 import random
+
+import util
 from sklearn.preprocessing import LabelEncoder
 import math
-from smart.model import ModelJoueurClassique
-from smart.model import ModelJoueurConvolution
+from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 ########################PARAMETRES :
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/services.mp4'#chemin de la video
+videoPath='dataset/clip_usopen.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(600,300)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -137,9 +138,7 @@ limite = 3
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
-import cv2
 
-import util
 factor = 0.49
 parameters = {
     "filter": {"iterations": 5, "shape": (10, 10)},  # brush size
