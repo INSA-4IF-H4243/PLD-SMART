@@ -24,8 +24,8 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/partie1.mp4'#chemin de la video
+PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
+videoPath='dataset/clip/cut-45_ybw9T2AO.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -151,7 +151,7 @@ parameters_joueurs = {
 }
 
 parameters_silouhette = {
-    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "filter": {"iterations": 3, "shape": (3, 3)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
 
