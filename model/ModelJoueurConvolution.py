@@ -197,12 +197,12 @@ class ModelJoueurConvolution:
         X_train = np.zeros((train_size, shape_frame[0], shape_frame[1]*nb_frame, shape_frame[2]), dtype=int)
         for i, vid in enumerate(vids_train):
             for j, frame in enumerate(vid.frames):
-                X_train[i, :, shape_frame[0]*j:shape_frame[0]*(j+1), :] = frame
+                X_train[i, :, shape_frame[1]*j:shape_frame[1]*(j+1), :] = frame
 
         X_test = np.zeros((test_size, shape_frame[0], shape_frame[1]*nb_frame, shape_frame[2]), dtype=int)
         for i, vid in enumerate(vids_test):
             for j, frame in enumerate(vid.frames):
-                X_test[i, :, shape_frame[0]*j:shape_frame[0]*(j+1), :] = frame
+                X_test[i, :, shape_frame[1]*j:shape_frame[1]*(j+1), :] = frame
         return X_train, y_train, X_test, y_test
 
     def train(self, X_train, y_train, random_state: int = 1234,
@@ -271,41 +271,45 @@ class ModelJoueurConvolution:
         print("Accuracy: ", tup[1])
         return tup
 
-    def predict(self, img):
+    def predict(self, seq_img):
         """
         Predict the class of the images
 
         Parameters
         ----------
-        img: np.array 2-dim
-            reshaped image or list of images
+        seq_img: np.array 4-dim
+            reshaped image or list of images (images avec couleurs)
+            Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
+            Il faut reshape la séquence d'images en (n, 50, 1500, 3) pour n-vidéos de 15 frames
 
         Returns
         -------
         y_pred: list
             list of predicted classes
         """
-        pred = self.model.predict(img)
+        pred = self.model.predict(seq_img)
         y_pred = np.argmax(pred, axis=1)
         return y_pred
     
-    def predict_label(self, img, y):
+    def predict_label(self, seq_img, y):
         """
         Predict the labels of the images
 
         Parameters
         ----------
-        img: np.array 2-dim
-            reshaped image or list of images
+        seq_img: np.array 4-dim
+            reshaped image or list of images (images avec couleurs)
+            Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
+            Il faut reshape la séquence d'images en (n, 50, 1500, 3) pour n-vidéos de 15 frames
         y: np.array
-            all possible output labels
+            all possible output labels (Ex: ['coup 'droit', 'revers', 'service', 'deplacement'])
 
         Returns
         -------
         y_pred: list
             list of predicted labels
         """
-        pred = self.model.predict(img)
+        pred = self.model.predict(seq_img)
         y_pred = np.argmax(pred, axis=1)
         encoder = LabelEncoder()
         encoder.fit(y)
