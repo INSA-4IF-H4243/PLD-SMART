@@ -188,11 +188,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
             if area > 20:
-                cv2.rectangle(
+                if devMode:cv2.rectangle(
                     transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 0, 255), 1
                 )  # players
             else:
-                cv2.rectangle(
+                if devMode:cv2.rectangle(
                     transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 0), 2
                 )  # ball
 
@@ -206,18 +206,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     for contour in contours:
 
         rec_base = cv2.boundingRect(contour)
-        x = rec_base[0]
-        y = rec_base[1]
-        up_low_base = y < milieu_y*2/3
-        (x, y, w, h) = rec_base
-        new_rec = rec_base
-        tab_rec.append(new_rec)
+        print(rec_base)
+        if(contour_taille(rec_base)>20 and contour_taille(rec_base)<300):
+            tab_rec.append(rec_base)
     ###AFFICHAGE DE TOUS LES CONTOURS
     
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 255, 255), 2)
     print(len(tab_rec))
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
