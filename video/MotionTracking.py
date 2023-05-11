@@ -6,7 +6,7 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
-from smart.model import ModelBalle
+#from smart.model import ModelBalle
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
@@ -25,7 +25,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/partie2.mp4'#chemin de la video
+videoPath='dataset/clip/partie1.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -136,7 +136,7 @@ balle_detecte = False
 rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
-model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
+#model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
@@ -157,7 +157,7 @@ parameters_silouhette = {
 
 subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
 subtractor = util.subtractor(subtractors[2], parameters["substractor"])
-
+subtractor_joueurs = util.subtractor(subtractors[2], parameters_joueurs["substractor"])
 ymin = 30
 ymax = 370
 xmin = 80
@@ -377,10 +377,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     cv2.rectangle(
         transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
 
-    # cv2.rectangle(
-    #     transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
-    # cv2.rectangle(
-    #     transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
+    
 
     ###RECUPERATION SILOUHETTE 
     (x, y, w, h) = affichageJHaut
@@ -390,9 +387,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transfomations_joueurs.append(cv2.resize(frame3, (800,400)))
     transfomations_joueurs.append(transfomations_joueurs[-1][ymin:ymax, xmin:xmax])
     transfomations_joueurs.append(cv2.cvtColor(transfomations_joueurs[-1], cv2.COLOR_BGR2GRAY))
-    transfomations_joueurs.append(subtractor.apply(transfomations_joueurs[-1]))
-    transfomations_joueurs.append(util.filter(transfomations_joueurs[-1], "closing", parameters_joueurs["filter"]))
-
+    transfomations_joueurs.append(subtractor_joueurs.apply(transfomations_joueurs[-1]))
+    # cv2.rectangle(
+    #     transfomations_joueurs[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+    # cv2.rectangle(
+    #     transfomations_joueurs[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
     try:
 
         # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
@@ -440,9 +439,9 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     cv2.imshow("feed", transformations[0])
     #if(devMode):cv2.imshow("feed2", dilated)
-    # if devMode:cv2.imshow("closing", transformations[3])
-    # cv2.imshow("JoueurHaut : ", silouhetteHaut)
-    # cv2.imshow("JoueurBas : ", silouhetteBas)
+    if devMode:cv2.imshow("test", transfomations_joueurs[3])
+    cv2.imshow("JoueurHaut : ", silouhetteHaut)
+    cv2.imshow("JoueurBas : ", silouhetteBas)
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     ret3, frame3 = cap.read()

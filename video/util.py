@@ -29,9 +29,12 @@ def subtractor(substractor, parameters):
 
 def filter(image, filter, parameters=""):
         
-        if filter== "closing": # dilation followed by erosion
+        if filter== "closing" and parameters=="": # dilation followed by erosion
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
             return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel, iterations=7)
+        if filter== "closing" and parameters!="": # dilation followed by erosion
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, parameters["shape"])
+            return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel, iterations=parameters["iterations"])
         if filter== "opening": # erosion followed by dilation
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, parameters["shape"])
             return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=parameters["iterations"])
