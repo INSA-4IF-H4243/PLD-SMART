@@ -300,29 +300,32 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         no_debut = False
 
         for i in range(len(tableau_trajectoire_balle)) :
-
+            
             if tableau_trajectoire_balle[i] == (-1,-1) :
-                if i == 0 :
-                    no_debut = True
-                elif i == len(tableau_trajectoire_balle)-1 :
-                    for j in range(1,no_pos) :
-                        tableau_position_balle[i-j] = derniere_pos_balle
-                else :
-                    if no_pos == 0:
-                        av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
                 no_pos+=1
 
+                if i == 0 :
+                    no_debut = True
+
+                if no_pos == 1 and not no_debut:
+                        av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
+
+                if i == len(tableau_trajectoire_balle)-1 :
+                    for j in range(1,no_pos+1) :
+                        tableau_position_balle[i-j] = derniere_pos_balle
             else :
                 derniere_pos_balle = tableau_trajectoire_balle[i]
                 if no_pos > 0 :
                     if no_debut :
-                        for j in range(1,no_pos) :
+                        for j in range(1,no_pos+1) :
                             tableau_position_balle[i-j] = derniere_pos_balle
+                        no_debut = False
                     else :
-                        for j in range(1,no_pos) :
+                        for j in range(1,no_pos+1) :
                             x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
-                            y = x = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
-                            tableau_position_balle[i-j]
+                            y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
+                            tableau_position_balle[i-j] = (x,y)
+                no_pos = 0
 
     #gerer les trajectoires
 
@@ -389,7 +392,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabTrajectoire[i])
             trajectoire=int(input())
         else :
-            tableau_position_balle.append(12)
+            tableau_position_balle.append(13)
             save_trajectoire(tableau_position_balle, outPutPathBalle + '/dataset.csv')
 
         if(trajectoire != -1):
@@ -405,29 +408,31 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
         if (type != -1) : 
             if trajectoire == 0 and type ==0 : 
-                tableau_trajectoire_balle.append(1)
+                tableau_position_balle.append(1)
             elif trajectoire == 0 and type ==1 : 
-                tableau_trajectoire_balle.append(2)
+                tableau_position_balle.append(2)
             elif trajectoire == 0 and type ==2 : 
-                tableau_trajectoire_balle.append(4)
+                tableau_position_balle.append(4)
             elif trajectoire == 0 and type ==3 : 
-                tableau_trajectoire_balle.append(3)
+                tableau_position_balle.append(3)
             elif trajectoire == 1 and type ==0 : 
-                tableau_trajectoire_balle.append(9)
+                tableau_position_balle.append(9)
             elif trajectoire == 1 and type ==1 : 
-                tableau_trajectoire_balle.append(10)
+                tableau_position_balle.append(10)
             elif trajectoire == 1 and type ==2 : 
-                tableau_trajectoire_balle.append(12)
+                tableau_position_balle.append(12)
             elif trajectoire == 1 and type ==3 : 
-                tableau_trajectoire_balle.append(11)
+                tableau_position_balle.append(11)
             elif trajectoire == 2 and type ==0 : 
-                tableau_trajectoire_balle.append(6)
+                tableau_position_balle.append(6)
             elif trajectoire == 2 and type ==1 : 
-                tableau_trajectoire_balle.append(7)
+                tableau_position_balle.append(7)
             else : 
-                tableau_trajectoire_balle.append(8)
+                tableau_position_balle.append(8)
 
-            save_trajectoire(tableau_trajectoire_balle, outPutPathBalle +'/dataset.csv')
+            if len(tableau_position_balle) != 46 : print('pas bonne taille')
+
+            save_trajectoire(tableau_position_balle, outPutPathBalle +'/dataset.csv')
 
         print("\nséquence enregistrée, reprise...\n")
         k_pressed=False

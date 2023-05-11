@@ -262,33 +262,39 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if len(tableau_trajectoire_balle) > 45 :
         tableau_trajectoire_balle.pop(0)
 
-    tableau_position_balle = copy.deepcopy(tableau_trajectoire_balle)
-    no_pos = 0
+    if len(tableau_trajectoire_balle) == 45 :
 
-    for i in range(len(tableau_trajectoire_balle)) :
+        tableau_position_balle = copy.deepcopy(tableau_trajectoire_balle)
+        no_pos = 0
+        no_debut = False
 
-        if tableau_trajectoire_balle[i] == (-1,-1) :
-            if i == 0 :
-                no_debut = True
-            elif i == len(tableau_trajectoire_balle)-1 :
-                for j in range(1,no_pos) :
-                    tableau_position_balle[i-j] = av_derniere_pos_balle
-            else :
-                if no_pos == 0:
-                    av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
-            no_pos+=1
+        for i in range(len(tableau_trajectoire_balle)) :
+            
+            if tableau_trajectoire_balle[i] == (-1,-1) :
+                no_pos+=1
 
-        else :
-            derniere_pos_balle = tableau_trajectoire_balle[i]
-            if no_pos > 0 :
-                if no_debut :
-                   for j in range(1,no_pos) :
+                if i == 0 :
+                    no_debut = True
+
+                if no_pos == 1 and not no_debut:
+                        av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
+
+                if i == len(tableau_trajectoire_balle)-1 :
+                    for j in range(1,no_pos+1) :
                         tableau_position_balle[i-j] = derniere_pos_balle
-                else :
-                    for j in range(1,no_pos) :
-                        x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
-                        y = x = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
-                        tableau_position_balle[i-j]
+            else :
+                derniere_pos_balle = tableau_trajectoire_balle[i]
+                if no_pos > 0 :
+                    if no_debut :
+                        for j in range(1,no_pos+1) :
+                            tableau_position_balle[i-j] = derniere_pos_balle
+                        no_debut = False
+                    else :
+                        for j in range(1,no_pos+1) :
+                            x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
+                            y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
+                            tableau_position_balle[i-j] = (x,y)
+                no_pos = 0
 
         
             
