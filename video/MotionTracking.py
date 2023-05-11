@@ -145,6 +145,11 @@ print("...")
 factor = 0.49
 parameters = {"substractor": {"history": 50, "threshold": 400},}
 
+parameters_joueurs = {
+    "filter": {"iterations": 10, "shape": (5, 5)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+
 parameters_silouhette = {
     "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
@@ -364,6 +369,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     ###RECUPERATION SILOUHETTE 
     (x, y, w, h) = affichageJHaut
     (x1, y1, w1, h1) = affichageJBas
+
+    transfomations_joueurs = []
+    transfomations_joueurs.append(cv2.resize(frame3, (800,400)))
+    transfomations_joueurs.append(transformations[-1][ymin:ymax, xmin:xmax])
+    transfomations_joueurs.append(cv2.cvtColor(transformations[-1], cv2.COLOR_BGR2GRAY))
+    transfomations_joueurs.append(subtractor.apply(transformations[-1]))
+    transfomations_joueurs.append(util.filter(transformations[-1], "closing", parameters_joueurs["filter"]))
+
     try:
 
         # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
@@ -371,7 +384,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         
-        silouhetteBas  = transformations[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
+        silouhetteBas  = transfomations_joueurs[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
         
         silouhetteBas=np.ceil(silouhetteBas/255)*255
         silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
@@ -380,7 +393,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
     try:
-        silouhetteHaut = transformations[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
+        silouhetteHaut = transfomations_joueurs[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
         silouhetteHaut=np.ceil(silouhetteHaut/255)*255
         silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
         silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
