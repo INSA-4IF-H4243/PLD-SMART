@@ -220,7 +220,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             x_c, y_c = centre(rec_c)
             x_c=int(x_c)
             y_c=int(y_c)
-            if area > 2000 : continue
+            if area > 1500 : continue
             if area > 300 and (not  (h<20 or w<20)) and (y_c+ymin)>a_left*(x_c+xmin)+b_left and (y_c+ymin)>a_right*(x_c+xmin)+b_right:
                 cv2.rectangle(transformations[0], (x_c+xmin, y_c+ymin), (x_c+xmin+5, y_c+ymin+5), (0, 0, 255), 2)
                 tab_rec.append((x, y, w, h))
