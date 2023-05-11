@@ -20,7 +20,7 @@ import math
 from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 ########################PARAMETRES :
 
-devMode=False#mode Développeur (=voir les tous les contours, filtres...)
+devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
@@ -142,7 +142,15 @@ print("...")
 
 factor = 0.49
 parameters = {
-    "filter": {"iterations": 5, "shape": (10, 10)},  # brush size
+    "filter": {"iterations": 10, "shape": (5, 5)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+parameters_dilation = {
+    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+parameters_silouhette = {
+    "filter": {"iterations": 10, "shape": (3, 3)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
 
@@ -171,8 +179,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     # cv2.imshow("gray", transformations[-1])
 
     transformations.append(subtractor.apply(transformations[-1]))
-    transformations.append(util.filter(transformations[-1], "closing"))
-    transformations.append(util.filter(transformations[-1], "dilation"))  
+    transformations.append(util.filter(transformations[-1], "closing",parameters["filter"]))
+    transformations.append(util.filter(transformations[-1], "dilation",parameters_dilation["filter"]))  
 
     
 
@@ -354,8 +362,9 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
         # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         silouhetteBas  = transformations[3][joueurs[0][1]:joueurs[0][1] + joueurs[0][3],joueurs[0][0]:joueurs[0][0] + joueurs[0][2]]
+        silouhetteBas  = util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
         silouhetteHaut = transformations[3][joueurs[1][1]:joueurs[1][1] + joueurs[1][3],joueurs[1][0]:joueurs[1][0] + joueurs[1][2]]
-
+        silouhetteBas  = util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
 
     except:
         silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
