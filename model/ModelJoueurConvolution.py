@@ -95,7 +95,7 @@ class ModelJoueurConvolution:
         self.model.save(model_path)
         return
 
-    def analyse_sequence_frame(self, path_data_frame: str, nb_frame: int = 15) -> None:
+    def analyse_sequence_frame(self, path_data_frame: str, nb_frame: int = 15):
         """
         Analyse a sequence of frames
 
@@ -155,7 +155,7 @@ class ModelJoueurConvolution:
         return new_y
 
     def split_train_test(self, list_videos, y, random_state: int = 42, test_size: float = 0.2,
-                             shape_frame: tuple = (50, 50, 3), nb_frame: int = 15) -> None:
+                             shape_frame: tuple = (50, 50, 3), nb_frame: int = 15):
         """
         Split the data into train and test
 
@@ -228,7 +228,7 @@ class ModelJoueurConvolution:
         return new_X_train, new_X_test
 
     def train(self, X_train, y_train, random_state: int = 1234,
-                  epochs: int = 70, batch_size: int = 32, verbose: int = 1) -> None:
+                  epochs: int = 70, batch_size: int = 32, verbose: int = 1):
         """
         Train the model
 
