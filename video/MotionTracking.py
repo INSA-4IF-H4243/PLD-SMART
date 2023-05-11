@@ -122,8 +122,8 @@ imageProcessor = ImageProcessor()
 ret3, frame3 = cap.read()
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame3,videoResize)
-milieu_y=int(len(frame3)/2)
-milieu_x=int(len(frame3[0])/2)
+milieu_y=200
+milieu_x=400
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
 joueurs=[(200,200,50,50),(200,200,50,50)]
