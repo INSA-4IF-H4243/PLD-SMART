@@ -3,9 +3,9 @@ import os
 from sklearn.model_selection import train_test_split
 import joblib
 
-class ModelBalle:
+class RFModelBalle:
     """
-    Model for the ball tracking
+    Random Forest Classifier for the ball tracking
     """
     def __init__(self, **kwargs) -> None:
         """
@@ -13,6 +13,7 @@ class ModelBalle:
         ----------
         n_estimators : int
             Number of estimators for the random forest classifier
+        
         **kwargs : dict
             Keyword arguments
         Keyword Arguments
@@ -25,8 +26,9 @@ class ModelBalle:
             pass
 
         try:
+            max_depth = kwargs["max_depth"]
             n_estimators = kwargs["n_estimators"]
-            self.model = RandomForestClassifier(n_estimators = n_estimators)
+            self.model = RandomForestClassifier(max_depth = max_depth, n_estimators = n_estimators)
             self.path = None
         except KeyError:
             pass
@@ -49,7 +51,7 @@ class ModelBalle:
         return cls(path = path)
     
     @classmethod
-    def construct_model(cls, n_estimators: int = 100):
+    def construct_model(cls, max_depth: int = 8, n_estimators: int = 20):
         """
         Parameters
         ----------
@@ -61,7 +63,7 @@ class ModelBalle:
         ModelBalle
             The model
         """
-        return cls(n_estimators = n_estimators)
+        return cls(max_depth = max_depth, n_estimators = n_estimators)
     
     def save_model(self, path: str):
         """
