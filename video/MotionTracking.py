@@ -266,10 +266,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             pred_haut = model_haut.predict(np.asmatrix(prected_haut))
             y_pred_haut = np.argmax(pred_haut, axis=1)
             
-        print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
+        #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
         
         ###AFFICHAGE 
-        
+        frame1=cv2.putText(frame1, output_name[int(y_pred_haut)], (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+        frame1=cv2.putText(frame1, output_name[int(y_pred_bas)], (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
+
         cv2.imshow("feed", frame1)
         if(devMode):cv2.imshow("feed2", dilated)
 
