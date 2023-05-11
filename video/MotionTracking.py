@@ -139,26 +139,67 @@ limite = 3
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
+import cv2
+
+import util
+factor = 0.49
+parameters = {
+    "filter": {"iterations": 5, "shape": (10, 10)},  # brush size
+    "substractor": {"history": 200, "threshold": 200},
+}
+subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
+subtractor = util.subtractor(subtractors[2], parameters["substractor"])
 while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme dans la lecture a cause du resize
     ###AJUSTEMENT TAILLE
-    frame1=cv2.resize(frame1,videoResize)
-    frame2=cv2.resize(frame2,videoResize)
-    frame3=cv2.resize(frame3,videoResize)
+    # frame1=cv2.resize(frame1,videoResize)
+    # frame2=cv2.resize(frame2,videoResize)
 
-    ###DIFFERENCE IMAGES POUR VOIR LES PIXELS EN MOUVEMENTS
-    diff1 = cv2.absdiff(frame1, frame2)
-    diff2 = cv2.absdiff(frame2, frame3)
-    diff= cv2.absdiff(diff1, diff2)
+    transformations = []
 
-    ###TRAITEMENT ET BINARISATION
-    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    #flow=cv2.calcOpticalFlowFarneback(gray, gray, None)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    _, thresh = cv2.threshold(blur, 40, 255, cv2.THRESH_OTSU)
-    dilated = cv2.dilate(thresh, None, iterations=3)
+    transformations.append(cv2.resize(frame3, (600, 300)))
+    # cv2.imshow("frame", transformations[-1])
+
+    transformations.append(transformations[-1][25:275, 100:500])
+    # cv2.imshow("test", transformations[-1])
+
+    transformations.append(cv2.cvtColor(transformations[-1], cv2.COLOR_BGR2GRAY))
+    # cv2.imshow("gray", transformations[-1])
+
+    transformations.append(subtractor.apply(transformations[-1]))
+    cv2.imshow("mask", transformations[-1])
+
+    transformations.append(
+        util.filter(transformations[-1], "closing", parameters["filter"])
+    )
+    cv2.imshow("closing", transformations[-1])
+
+    # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
+    # cv2.imshow("dilation", transformations[-1])
+
+    # transformations.append(cv2.medianBlur(transformations[-1], 5))
+    # cv2.imshow("blur", transformations[-1])
 
     ###RECHERCHE CONTOURS DES FORMES EN MOUVEMENT
-    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(
+    transformations[-1], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > 1:
+            x, y, w, h = cv2.boundingRect(contour)
+            if area > 20:
+                cv2.rectangle(
+                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 0, 255), 2
+                )  # players
+            else:
+                cv2.rectangle(
+                    transformations[0], (x + 100 -10, y + 25 -10), (x + 100 + w, y + 25 + h), (0, 255, 0), 2
+                )  # ball
+
+    cv2.rectangle(transformations[0], (50, 25), (550, 275), (255, 0, 0), 2)
+    cv2.imshow("frame", transformations[0])
+
+
     ball_rec = []   #contient un tableau de contours qui va servire pour la balle
     ###PREMIERE DISCRIMINATION DES CONTOURS
     tab_rec = []    #contient les contours (contour=(x,y,w,h))
@@ -170,7 +211,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         up_low_base = y < milieu_y*2/3
         (x, y, w, h) = rec_base
         new_rec = rec_base
-        if devMode:cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        if devMode:cv2.rectangle(frame3, (x, y), (x+w, y+h), (0, 255, 255), 2)
 
         #élimination des contours dont la forme est clairement differente d'un tennisman
         
@@ -204,7 +245,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(frame1, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv2.rectangle(frame3, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
@@ -394,7 +435,9 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     if cv2.waitKey(40) == 27:
         break
-
+    ret3, frame3 = cap.read()
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 cv2.destroyAllWindows()
 cap.release()
 
