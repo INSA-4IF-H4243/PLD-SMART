@@ -300,7 +300,7 @@ class ModelJoueurConvolution:
         seq_img: np.array 4-dim
             reshaped image or list of images (images avec couleurs)
             Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
-            Il faut reshape la séquence d'images en (n, 50, 1500, 3) pour n-vidéos de 15 frames
+            Il faut reshape la séquence d'images en (n, 50, 750, 3) pour n-vidéos de 15 frames
         y: np.array
             all possible output labels (Ex: ['coup droit', 'revers', 'service', 'deplacement'])
 
