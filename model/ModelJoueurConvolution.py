@@ -281,13 +281,20 @@ class ModelJoueurConvolution:
             reshaped image or list of images (images avec couleurs)
             Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
             Il faut reshape la séquence d'images en (n, 50, 1500, 3) pour n-vidéos de 15 frames
+            Si image est en noir et blanc, le shape est (n, 50, 750)
 
         Returns
         -------
         y_pred: list
             list of predicted classes
         """
-        pred = self.model.predict(seq_img)
+        new_seq_img = np.array(seq_img)
+        if (len(new_seq_img.shape) == 3):
+            new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
+            for i, img in enumerate(seq_img):
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                new_seq_img[i] = img
+        pred = self.model.predict(new_seq_img)
         y_pred = np.argmax(pred, axis=1)
         return y_pred
     
@@ -301,6 +308,8 @@ class ModelJoueurConvolution:
             reshaped image or list of images (images avec couleurs)
             Il faut reshape la séquence d'images en (1, 50, 750, 3) pour une vidéo de 15 frames
             Il faut reshape la séquence d'images en (n, 50, 750, 3) pour n-vidéos de 15 frames
+            Si image est en noir et blanc, le shape est (n, 50, 750)
+
         y: np.array
             all possible output labels (Ex: ['coup droit', 'revers', 'service', 'deplacement'])
 
@@ -309,7 +318,13 @@ class ModelJoueurConvolution:
         y_pred: list
             list of predicted labels
         """
-        pred = self.model.predict(seq_img)
+        new_seq_img = np.array(seq_img)
+        if (len(new_seq_img.shape) == 3):
+            new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
+            for i, img in enumerate(seq_img):
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                new_seq_img[i] = img
+        pred = self.model.predict(new_seq_img)
         y_pred = np.argmax(pred, axis=1)
         encoder = LabelEncoder()
         encoder.fit(y)

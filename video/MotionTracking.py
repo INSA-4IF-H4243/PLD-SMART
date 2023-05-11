@@ -98,13 +98,13 @@ output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: se
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
 #JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
+model_bas = ModelJoueurConvolution.load_model_from_path("saved_models/model_1_joueur_bas_conv.h5")
 print(model_bas.summary_model)
 #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
 #JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+model_haut = ModelJoueurConvolution.load_model_from_path("saved_models/model_1_joueur_haut_conv.h5")
 print(model_haut.summary_model)        
 #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
@@ -264,8 +264,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         try:
             crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
             crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
-            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(39, 52), interpolation=cv2.INTER_LINEAR)  
-            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (39, 52), interpolation=cv2.INTER_LINEAR)
+            silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
+            silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
         except:
             silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
@@ -279,14 +279,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         
         #print(prected.shape)
         if(len(tableauSortieJBas)>15):
-            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+            seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1,50,750))
             #(1, 50, 750, 3)
             output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
             
    
         #print(prected.shape)
         if(len(tableauSortieJHaut)>15):
-            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+            seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1,50,750))
             output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
             
         #print(" Joueur Haut: ", output_name[int(y_pred_haut)], (" Joueur Bas: ", output_name[int(y_pred_bas)]))
