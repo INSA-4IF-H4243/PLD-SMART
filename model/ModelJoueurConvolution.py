@@ -205,28 +205,6 @@ class ModelJoueurConvolution:
                 X_test[i, :, shape_frame[0]*j:shape_frame[0]*(j+1), :] = frame
         return X_train, y_train, X_test, y_test
 
-    def normalize_input(self, X_train, X_test):
-        """
-        Normalize the input
-
-        Parameters
-        ----------
-        X_train: np.array
-            input train
-        X_test: np.array
-            input test
-
-        Returns
-        -------
-        new_X_train: np.array
-            normalized input train
-        new_X_test: np.array
-            normalized input test
-        """
-        new_X_train = X_train / 255.0
-        new_X_test = X_test / 255.0
-        return new_X_train, new_X_test
-
     def train(self, X_train, y_train, random_state: int = 1234,
                   epochs: int = 70, batch_size: int = 32, verbose: int = 1):
         """
