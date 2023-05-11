@@ -6,6 +6,7 @@ import ffmpeg
 from smart.processor import ImageProcessor
 from smart.video import Video, Image
 import math
+import copy
 
 ########################PARAMETRES :
 HAUT_VERS_BAS = 1
@@ -260,6 +261,37 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     if len(tableau_trajectoire_balle) > 45 :
         tableau_trajectoire_balle.pop(0)
+
+    tableau_position_balle = copy.deepcopy(tableau_trajectoire_balle)
+    no_pos = 0
+
+    for i in range(len(tableau_trajectoire_balle)) :
+
+        if tableau_trajectoire_balle[i] == (-1,-1) :
+            if i == 0 :
+                no_debut = True
+            elif i == len(tableau_trajectoire_balle)-1 :
+                for j in range(1,no_pos) :
+                    tableau_position_balle[i-j] = av_derniere_pos_balle
+            else :
+                if no_pos == 0:
+                    av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
+            no_pos+=1
+
+        else :
+            derniere_pos_balle = tableau_trajectoire_balle[i]
+            if no_pos > 0 :
+                if no_debut :
+                   for j in range(1,no_pos) :
+                        tableau_position_balle[i-j] = derniere_pos_balle
+                else :
+                    for j in range(1,no_pos) :
+                        x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
+                        y = x = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
+                        tableau_position_balle[i-j]
+
+        
+            
     
     (x, y, w, h) = balle
     if balle_detecte : cv2.rectangle(frame1, (x, y), (x+w, y+h), (255, 255, 0), 2)

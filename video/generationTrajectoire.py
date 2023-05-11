@@ -51,15 +51,15 @@ def save_trajectoire(trajectoire, outPutPath) :
         f.close()
 
 
-# videoResize=(600,300)
-# cap = cv2.VideoCapture('datasetVideos\partie1.mp4')
-# for i in range(300) :
-#     ret1, frame1 = cap.read()
-# frame1=cv2.resize(frame1,videoResize)
+videoResize=(600,300)
+cap = cv2.VideoCapture('datasetVideos\partie1.mp4')
+for i in range(300) :
+    ret1, frame1 = cap.read()
+frame1=cv2.resize(frame1,videoResize)
 
-# np_array = np.array(frame1)
-# imgpil = Image.fromarray(np_array) # Transformation du tableau en image PIL
-# imgpil.save("resultat.jpg")
+np_array = np.array(frame1)
+imgpil = Image.fromarray(np_array) # Transformation du tableau en image PIL
+imgpil.save("resultat.png")
 
 fen = tk.Tk()
 fen.geometry("1000x500")

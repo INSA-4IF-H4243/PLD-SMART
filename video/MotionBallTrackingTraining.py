@@ -10,6 +10,7 @@ from pynput import keyboard
 import csv
 import os
 import math
+import copy
 
 ########################PARAMETRES :
 HAUT_VERS_BAS = 1
@@ -20,7 +21,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=20#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/partie2.mp4'#chemin de la video
+videoPath='datasetVideos/clip_long.mp4'#chemin de la video
 outPutPathBalle='trajectoire'#chemin d'enregistrement de la trajectoire de la balle
 outPutPathJBas='img/cd_j133/cut/jBas'#chemin d'enregistrement de la silouhette du Joueur 2
 nb_frame_trajectoire=20#nombre de frame pour la trajectoire de la balle
@@ -292,6 +293,37 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if len(tableau_trajectoire_balle) > 45 :
         tableau_trajectoire_balle.pop(0)
 
+    if len(tableau_trajectoire_balle) == 45 :
+
+        tableau_position_balle = copy.deepcopy(tableau_trajectoire_balle)
+        no_pos = 0
+        no_debut = False
+
+        for i in range(len(tableau_trajectoire_balle)) :
+
+            if tableau_trajectoire_balle[i] == (-1,-1) :
+                if i == 0 :
+                    no_debut = True
+                elif i == len(tableau_trajectoire_balle)-1 :
+                    for j in range(1,no_pos) :
+                        tableau_position_balle[i-j] = derniere_pos_balle
+                else :
+                    if no_pos == 0:
+                        av_derniere_pos_balle = tableau_trajectoire_balle[i-1]
+                no_pos+=1
+
+            else :
+                derniere_pos_balle = tableau_trajectoire_balle[i]
+                if no_pos > 0 :
+                    if no_debut :
+                        for j in range(1,no_pos) :
+                            tableau_position_balle[i-j] = derniere_pos_balle
+                    else :
+                        for j in range(1,no_pos) :
+                            x = av_derniere_pos_balle[0] + int (((derniere_pos_balle[0] - av_derniere_pos_balle[0])/no_pos)*j)
+                            y = x = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
+                            tableau_position_balle[i-j]
+
     #gerer les trajectoires
 
     # if compteur_non_detection > 6 and derniere_position_balle[1] > 10 :
@@ -357,7 +389,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabTrajectoire[i])
             trajectoire=int(input())
         else :
-            save_trajectoire(tableau_trajectoire_balle, outPutPathBalle + '/non_detecte')
+            tableau_position_balle.append(12)
+            save_trajectoire(tableau_position_balle, outPutPathBalle + '/dataset.csv')
 
         if(trajectoire != -1):
             print("Type de balle:")
@@ -371,8 +404,30 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 type=int(input())
 
         if (type != -1) : 
-            if trajectoire == 0 or trajectoire == 1 : save_trajectoire(tableau_trajectoire_balle, outPutPathBalle +'/'+tabDirection[direction] + '/'+tabTrajectoire[trajectoire] + '/'+tabTypeCroiseCentre[type])
-            else : save_trajectoire(tableau_trajectoire_balle, outPutPathBalle + '/'+tabDirection[direction] + '/'+tabTrajectoire[trajectoire] + '/'+tabTypeLigne[type])
+            if trajectoire == 0 and type ==0 : 
+                tableau_trajectoire_balle.append(1)
+            elif trajectoire == 0 and type ==1 : 
+                tableau_trajectoire_balle.append(2)
+            elif trajectoire == 0 and type ==2 : 
+                tableau_trajectoire_balle.append(4)
+            elif trajectoire == 0 and type ==3 : 
+                tableau_trajectoire_balle.append(3)
+            elif trajectoire == 1 and type ==0 : 
+                tableau_trajectoire_balle.append(9)
+            elif trajectoire == 1 and type ==1 : 
+                tableau_trajectoire_balle.append(10)
+            elif trajectoire == 1 and type ==2 : 
+                tableau_trajectoire_balle.append(12)
+            elif trajectoire == 1 and type ==3 : 
+                tableau_trajectoire_balle.append(11)
+            elif trajectoire == 2 and type ==0 : 
+                tableau_trajectoire_balle.append(6)
+            elif trajectoire == 2 and type ==1 : 
+                tableau_trajectoire_balle.append(7)
+            else : 
+                tableau_trajectoire_balle.append(8)
+
+            save_trajectoire(tableau_trajectoire_balle, outPutPathBalle +'/dataset.csv')
 
         print("\nséquence enregistrée, reprise...\n")
         k_pressed=False
