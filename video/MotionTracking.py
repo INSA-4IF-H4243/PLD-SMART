@@ -24,13 +24,8 @@ from smart.model import ModelJoueurClassique, ModelJoueurConvolution
 devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
-<<<<<<< HEAD
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
 videoPath='dataset/partie2.mp4'#chemin de la video
-=======
-PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/2.mp4'#chemin de la video
->>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -148,7 +143,7 @@ nbFrame=0
 print("...")
 
 factor = 0.49
-parameters = {"substractor": {"history": 100, "threshold": 400},}
+parameters = {"substractor": {"history": 50, "threshold": 400},}
 
 parameters_silouhette = {
     "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
@@ -182,8 +177,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transformations.append(subtractor.apply(transformations[-1]))
     transformations.append(util.filter(transformations[-1], "closing"))
     transformations.append(util.filter(transformations[-1], "dilation"))
-
     cv2.imshow("gray", transformations[-1])
+
+
+    
 
     
 
@@ -203,13 +200,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
-<<<<<<< HEAD
             if area > 1500 : continue
             if area > 300:
-=======
-            if area > 2000 : continue
-            if area > 300 and not  (w/h>4 or h/w>4):
->>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
                 tab_rec.append((x, y, w, h))
             elif area < 100:
                 ball_rec.append((x, y, w, h))
@@ -223,10 +215,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             (x, y, w, h) = rec
             cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
     #print(len(tab_rec))
-<<<<<<< HEAD
-
-=======
->>>>>>> cb4df4f0c405cbe3530b46dba1fb9c7dd6594796
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -337,10 +325,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         for point in tableau_position_balle :
             tab_prediction.append(point[0])
             tab_prediction.append(point[1])
-        print("ici")
-        print(len(tableau_position_balle))
-        resultat = model_balle.predict(tableau_position_balle)
-        print(resultat)
+        # print("ici")
+        # print(len(tableau_position_balle))
+        # resultat = model_balle.predict(tab_prediction)
+        # print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(
@@ -406,15 +394,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     ###PREDICTIONS
 
     
-    #print(prected.shape)
-    if(len(tableauSortieJBas)>15):
-        seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-        output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+    # #print(prected.shape)
+    # if(len(tableauSortieJBas)>15):
+    #     seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+    #     output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         
-    #print(prected.shape)
-    if(len(tableauSortieJHaut)>15):
-        seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-        output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+    # #print(prected.shape)
+    # if(len(tableauSortieJHaut)>15):
+    #     seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+    #     output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
         
     ###AFFICHAGE 
     
