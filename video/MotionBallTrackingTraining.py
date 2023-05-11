@@ -115,6 +115,8 @@ def save_trajectoire(trajectoire, outPutPath) :
 
 ########TRAITEMENT DE LA VIDEO
 
+
+
 #####LECTURE VIDEO
 cap = cv2.VideoCapture(videoPath)
 fps = cap.get(cv2.CAP_PROP_FPS)#FPS de la video d'entree

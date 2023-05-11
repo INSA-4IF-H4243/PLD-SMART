@@ -1,4 +1,3 @@
-import cv2
 #!pip install .
 import cv2
 import numpy as np
@@ -10,9 +9,6 @@ import copy
 import util
 
 ########################PARAMETRES :
-HAUT_VERS_BAS = 1
-BAS_VERS_HAUT = 0
-PAS_MOUVEMENT_BALLE = -1
 
 devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
@@ -94,8 +90,6 @@ rapportFps=fps/fpsOutput
 imageProcessor = ImageProcessor()
 
 ret1, frame1 = cap.read()
-ret2, frame2 = cap.read()
-ret3, frame3 = cap.read()
 
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame1,videoResize)
@@ -145,12 +139,7 @@ while exist:
 
     transformations.append(util.filter(transformations[-1], "closing"))
     transformations.append(util.filter(transformations[-1], "dilation"))  
-
-    # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
-    # cv2.imshow("dilation", transformations[-1])
-
-    # transformations.append(cv2.medianBlur(transformations[-1], 5))
-    # cv2.imshow("blur", transformations[-1])
+    cv2.imshow("gray", transformations[-1])
 
     contours, hierarchy = cv2.findContours(
         transformations[-1], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -161,10 +150,10 @@ while exist:
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
-            if area > 2000 : continue
+            if area > 1500 : continue
             if area > 300:
                 tab_rec.append((x, y, w, h))
-            else:
+            elif area < 100:
                 ball_rec.append((x, y, w, h))
 
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
@@ -272,8 +261,6 @@ while exist:
                             tableau_position_balle[i-j] = (x,y)
                 no_pos = 0
 
-    (x, y, w, h) = balle
-
     for joueur in joueurs :
         cv2.rectangle(
                     transformations[0], (joueur[0] + xmin - 10, joueur[1] + ymin - 10), (joueur[0] + xmin + joueur[2], joueur[1] + ymin + joueur[3]), (0, 0, 255), 2
@@ -282,8 +269,7 @@ while exist:
     if balle_detecte : 
         cv2.rectangle(
                     transformations[0], (balle[0] + xmin - 10, balle[1] + ymin - 10), (balle[0] + xmin + balle[2], balle[1] + ymin + balle[3]), (0, 255, 0), 2
-                )  # ball
-        
+                )  # ball        
 
     cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
     cv2.imshow("frame", transformations[0])
