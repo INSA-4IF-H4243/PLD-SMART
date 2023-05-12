@@ -1,3 +1,4 @@
 from .ModelJoueurClassique import ModelJoueurClassique
 from .ModelJoueurConvolution import ModelJoueurConvolution
-from .ModelBalle import ModelBalle
+from .NNModelBalle import NNModelBalle
+from .RFModelBalle import RFModelBalle
