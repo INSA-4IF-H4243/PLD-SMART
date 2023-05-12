@@ -2,7 +2,7 @@ import cv2
 import os
 import numpy as np
 import ffmpeg
-from ..video.Image import Image
+from video.Image import Image
 
 
 def process_ffmpeg(frame, saving_file_name, fps=30):

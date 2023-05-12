@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from ..video.Video import Video
+from video.Video import Video
 import os
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
