@@ -6,7 +6,7 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
-from smart.model import RFModelBalle
+#
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
@@ -29,7 +29,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/cutHenri7.mp4'#chemin de la video
+videoPath='dataset/clip_usopen.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=30#nombre d'images pour un coups
@@ -141,7 +141,6 @@ balle_detecte = False
 rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
-model_balle = RFModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
@@ -348,9 +347,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             tab_prediction.append(point[1])
         tab_prediction = np.array(tab_prediction)
         tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
-        resultat = model_balle.predict(tab_prediction)
-        #if resultat[0]!=4 :
-        print(resultat)
+
     
     for joueur in joueurs :
         cv2.rectangle(
