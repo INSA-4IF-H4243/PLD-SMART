@@ -194,22 +194,22 @@ class NNModelBalle:
             history of the training
         """
         tf.random.set_seed(random_state)
-        checkpoint_name = 'checkpoints/Weights-{epoch:03d}--{val_loss:.5f}.hdf5'
-        checkpoint = tf.keras.callbacks.ModelCheckpoint(
-                checkpoint_name, monitor='val_loss', verbose=verbose, save_best_only=True, mode='auto')
-        callbacks_list = [checkpoint]
+        # checkpoint_name = 'checkpoints/Weights-{epoch:03d}--{val_loss:.5f}.hdf5'
+        # checkpoint = tf.keras.callbacks.ModelCheckpoint(
+        #         checkpoint_name, monitor='val_loss', verbose=verbose, save_best_only=True, mode='auto')
+        # callbacks_list = [checkpoint]
         self.model.compile(
             optimizer=optimizers.Adam(learning_rate=learning_rate),
             loss=losses.SparseCategoricalCrossentropy(),
-            metrics=[metrics.SparseCategoricalAccuracy()]
+            metrics=['accuracy']
         )
 
         history = self.model.fit(
             X_train, y_train,
             epochs=epochs,
             batch_size=batch_size,  # données transmises pour une session
-            validation_split=0.2,
-            callbacks=callbacks_list
+            # validation_split=0.2,
+            # callbacks=callbacks_list
         )
         return history
 
