@@ -6,6 +6,7 @@ import cv2
 from sklearn.preprocessing import LabelEncoder
 import random
 import numpy as np
+from keras import metrics
 
 
 class ModelJoueurClassique:
@@ -264,7 +265,7 @@ class ModelJoueurClassique:
         self.model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),  # 'Adam',
-            metrics=['accuracy']
+            metrics=[metrics.SparseCategoricalAccuracy()]
         )
 
         history = self.model.fit(

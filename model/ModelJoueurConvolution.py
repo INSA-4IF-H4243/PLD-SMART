@@ -237,7 +237,7 @@ class ModelJoueurConvolution:
         callbacks_list = [checkpoint]
         self.model.compile(
             loss = tf.keras.losses.SparseCategoricalCrossentropy(),
-            optimizer='rmsprop',
+            optimizer=tf.keras.optimizers.RMSprop(lr=1e-4),
             metrics=['accuracy']
         )
 
@@ -292,7 +292,7 @@ class ModelJoueurConvolution:
         if (len(new_seq_img.shape) == 3):
             new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
             for i, img in enumerate(seq_img):
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
                 new_seq_img[i] = img
         pred = self.model.predict(new_seq_img)
         y_pred = np.argmax(pred, axis=1)
