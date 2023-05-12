@@ -29,7 +29,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='datasetVideos/clip_usopen.mp4'#chemin de la video
+videoPath='dataset/clip_masterclass/clip22.mp4'#chemin de la video
 fpsOutput=30#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=30#nombre d'images pour un coups
