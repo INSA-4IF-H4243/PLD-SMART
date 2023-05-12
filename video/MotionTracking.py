@@ -6,7 +6,7 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
-from smart.model import ModelBalle
+from smart.model import RFModelBalle
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
@@ -141,7 +141,7 @@ balle_detecte = False
 rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
-model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
+model_balle = RFModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
