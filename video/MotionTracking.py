@@ -6,7 +6,7 @@ import numpy as np
 from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
-#from smart.model import ModelBalle
+from smart.model import ModelBalle
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
@@ -141,7 +141,7 @@ balle_detecte = False
 rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
-#model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
+model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
@@ -188,11 +188,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transformations.append(util.filter(transformations[-1], "closing"))
     transformations.append(util.filter(transformations[-1], "dilation"))
     cv2.imshow("gray", transformations[-1])
-
-
-    
-
-    
 
     # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
     # cv2.imshow("dilation", transformations[-1])
@@ -351,10 +346,11 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         for point in tableau_position_balle :
             tab_prediction.append(point[0])
             tab_prediction.append(point[1])
-        # print("ici")
-        # print(len(tableau_position_balle))
-        # resultat = model_balle.predict(tab_prediction)
-        # print(resultat)
+        tab_prediction = np.array(tab_prediction)
+        tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
+        resultat = model_balle.predict(tab_prediction)
+        if resultat[0]!=4 :
+            print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(

@@ -6,14 +6,16 @@ build/
 smart.egg-info/
 Video/__pycache__/
 Processor/__pycache__/
-dataset/
-datasetVideosCourtes/
+dataset/*
+datasetVideosCourtes/*
 img/*
 trajectoire/*
 datasetVideos/*
 image_input/*
 
 checkpoints/*
+
+saved_models/*
 
 shadow_full_output/backhand/*
 shadow_full_output/backhand_slice/*
