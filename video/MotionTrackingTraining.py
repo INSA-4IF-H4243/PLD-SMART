@@ -13,7 +13,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/3.mp4'#chemin de la video
+videoPath='dataset/clip/partie1.mp4'#chemin de la video
 outPutPathJHaut='/jqi1'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/jqi1'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
@@ -96,7 +96,7 @@ imageProcessor = ImageProcessor()
 ret3, frame3 = cap.read()
 #####AJUSTEMENT TAILLE
 frame1=cv2.resize(frame3,videoResize)
-milieu_y=200
+milieu_y=150
 milieu_x=400
 
 #####INIT CONTOURS JOUEURS AU MILIEU DU TERRAIN (joeur 0 = joueur du haut, joueur 1 = joueur du bas)
@@ -106,31 +106,31 @@ balle = (milieu_x-25,milieu_y,50,50)
 pos_balle = centre(balle)
 pos_precedent = pos_balle
 balle_detecte = False
-rayon_detection = 5
+rayon_detection = 10
 compteur_non_detection = 0
 limite = 3
+#model_balle = ModelBalle.load_model_from_path('saved_models/model_balle_1.joblib')
 
 #####LECTURE IMAGE PAR IMAGE
 nbFrame=0
 print("...")
 
 factor = 0.49
-parameters = {
+parameters = {"substractor": {"history": 50, "threshold": 400},}
+
+parameters_joueurs = {
     "filter": {"iterations": 10, "shape": (5, 5)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
-parameters_dilation = {
-    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
-    "substractor": {"history": 200, "threshold": 200},
-}
+
 parameters_silouhette = {
-    "filter": {"iterations": 3, "shape": (2, 2)},  # brush size
+    "filter": {"iterations": 3, "shape": (3, 3)},  # brush size
     "substractor": {"history": 200, "threshold": 200},
 }
 
 subtractors = ["GMG", "MOG", "MOG2", "KNN", "CNT"]
 subtractor = util.subtractor(subtractors[2], parameters["substractor"])
-
+subtractor_joueurs = util.subtractor(subtractors[2], parameters_joueurs["substractor"])
 ymin = 30
 ymax = 370
 xmin = 80
@@ -153,8 +153,12 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     # cv2.imshow("gray", transformations[-1])
 
     transformations.append(subtractor.apply(transformations[-1]))
-    transformations.append(util.filter(transformations[-1], "closing",parameters["filter"]))
-    transformations.append(util.filter(transformations[-1], "dilation",parameters_dilation["filter"]))  
+    transformations.append(util.filter(transformations[-1], "closing"))
+    transformations.append(util.filter(transformations[-1], "dilation"))
+    #cv2.imshow("gray", transformations[-1])
+
+
+    
 
     
 
@@ -170,24 +174,41 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     )
     tab_rec = []
     ball_rec =[]
+    a_left=(ymax-ymin)/(150)
+    b_left=ymax-a_left*xmax
+
+    a_right=(ymin-ymax)/(150)
+    b_right=ymax-a_right*xmin
+    cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
+    cv2.line(transformations[0],(xmax-150, int(a_left*(xmax-150)+b_left)), (xmax, int(a_left*(xmax)+b_left)), (255, 137, 0), 2)
+    cv2.line(transformations[0],(xmin, int(a_right*(xmin)+b_right)),(xmin+150, int(a_right*(xmin+150)+b_right)), (137, 255, 0), 2)
+    
+
     for contour in contours:
         area = cv2.contourArea(contour)
         if area > 1:
             x, y, w, h = cv2.boundingRect(contour)
+
+            rec_c=( x, y, w, h )
+            x_c, y_c = centre(rec_c)
+            x_c=int(x_c)
+            y_c=int(y_c)
             if area > 2000 : continue
-            if area > 300:
+            if area > 300 and (not  (h<20 or w<20)) and (y_c+ymin)>a_left*(x_c+xmin)+b_left and (y_c+ymin)>a_right*(x_c+xmin)+b_right:
+                cv2.rectangle(transformations[0], (x_c+xmin, y_c+ymin), (x_c+xmin+5, y_c+ymin+5), (0, 0, 255), 2)
                 tab_rec.append((x, y, w, h))
-            else:
+            elif area < 100:
                 ball_rec.append((x, y, w, h))
 
-    cv2.rectangle(transformations[0], (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
+
 
     ###AFFICHAGE DE TOUS LES CONTOURS
     
     if devMode:
         for rec in tab_rec:
             (x, y, w, h) = rec
-            cv2.rectangle(transformations[0], (x, y), (x+w, y+h), (0, 127, 127), 2)
+            cv2.rectangle(transformations[0], (x+xmin, y+ymin), (x+w+xmin, y+h+ymin), (0, 127, 127), 2)
+    #print(len(tab_rec))
     ###CHOIX FINAL DES DEUX CONTOURS DES DEUX JOUEURS
     if(len(tab_rec)==2):       #Si à cette étape il n'y a que 2 contours, ce sont les bons
         if((tab_rec[0])[1]<(tab_rec[1])[1]):
@@ -206,8 +227,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             #joueur du haut          
             if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
                 #if distance2(joueurs[0],rec) < 5*5:
-                    if devMode:print("joueur0")
-                    if devMode:print(similarite(joueurs[0],rec))
+                    # if devMode:print("joueur0")
+                    # if devMode:print(similarite(joueurs[0],rec))
                     minJoueur0=rec
                     b0 = 1
             #joueur du bas
@@ -226,7 +247,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     if balle_detecte:
         for rec in ball_rec :
-            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20 and distance2(balle,rec) > 1 :
+            if distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 50 and distance2(balle,rec) > 1 :
                 minBalle=rec  
                 bBalle = 1
         if bBalle : balle = minBalle
@@ -236,7 +257,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     if not balle_detecte:
         if compteur_non_detection < limite :
             for rec in ball_rec :
-                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 20+rayon_detection*compteur_non_detection) :
+                if (distance2(balle,rec) < distance2(balle,minBalle) and distance2(balle,rec) < 50+rayon_detection*(compteur_non_detection+1)) :
                     minBalle=rec  
                     bBalle = 1
                     b = True
@@ -293,6 +314,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                             y = av_derniere_pos_balle[1] + int (((derniere_pos_balle[1] - av_derniere_pos_balle[1])/no_pos)*j)
                             tableau_position_balle[i-j] = (x,y)
                 no_pos = 0
+
+        tab_prediction = []
+        for point in tableau_position_balle :
+            tab_prediction.append(point[0])
+            tab_prediction.append(point[1])
+        # print("ici")
+        # print(len(tableau_position_balle))
+        # resultat = model_balle.predict(tab_prediction)
+        # print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(
@@ -318,17 +348,22 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     cv2.rectangle(
         transformations[0], (x_bas,y_bas),(x_bas + w_bas, y_bas + h_bas), (255, 0, 255), 2)
     cv2.rectangle(
-        transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
-
-    # cv2.rectangle(
-    #     transformations[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
-    # cv2.rectangle(
-    #     transformations[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
+        transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)        
 
     ###RECUPERATION SILOUHETTE 
     if(nbFrame%rapportFps<1):
         (x, y, w, h) = affichageJHaut
         (x1, y1, w1, h1) = affichageJBas
+
+        transfomations_joueurs = []
+        transfomations_joueurs.append(cv2.resize(frame3, (800,400)))
+        transfomations_joueurs.append(transfomations_joueurs[-1][ymin:ymax, xmin:xmax])
+        transfomations_joueurs.append(cv2.cvtColor(transfomations_joueurs[-1], cv2.COLOR_BGR2GRAY))
+        transfomations_joueurs.append(subtractor_joueurs.apply(transfomations_joueurs[-1]))
+        # cv2.rectangle(
+        #     transfomations_joueurs[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
+        # cv2.rectangle(
+        #     transfomations_joueurs[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
         try:
 
             # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
@@ -336,7 +371,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
             # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
             
-            silouhetteBas  = transformations[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
+            silouhetteBas  = transfomations_joueurs[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
             
             silouhetteBas=np.ceil(silouhetteBas/255)*255
             silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
@@ -345,7 +380,7 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
             silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
 
         try:
-            silouhetteHaut = transformations[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
+            silouhetteHaut = transfomations_joueurs[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
             silouhetteHaut=np.ceil(silouhetteHaut/255)*255
             silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
             silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
