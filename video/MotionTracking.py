@@ -25,11 +25,11 @@ from playsound import playsound
 import multiprocessing
 ########################PARAMETRES :
 
-devMode=True#mode Développeur (=voir les tous les contours, filtres...)
+devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/video_test.mp4'#chemin de la video
+videoPath='dataset/cutHenri7.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=30#nombre d'images pour un coups
@@ -104,13 +104,13 @@ output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: se
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
 #JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_Jiaqi_bas.h5")
+model_bas = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_henri_bas_deplacement.h5")
 print(model_bas.summary_model)
 #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
 #JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_Jiaqi_haut.h5")
+model_haut = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_henri_haut_deplacement.h5")
 print(model_haut.summary_model)        
 #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
@@ -429,11 +429,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 100*100*30))
         output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         # for playing note.wav file
-        if(output_bas_vocal!=output_bas):
-            path="Audio/"+output_bas+"/"+str(random.randrange(4))+".mp3"
-            print(path)
-            playsound(path,False)
-            output_bas_vocal=output_bas
+        # try:
+        #     if(output_bas_vocal!=output_bas):
+        #         path="Audio/"+output_bas+"/"+str(random.randrange(4))+".mp3"
+        #         print(path)
+        #         playsound(path,False)
+        #         output_bas_vocal=output_bas
+        # except:
+        #     print(path)
     #print(prected.shape)
     if(len(tableauSortieJHaut)>30):
         seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 100*100*30))
