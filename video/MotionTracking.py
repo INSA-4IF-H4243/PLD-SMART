@@ -3,7 +3,6 @@ import cv2
 #!pip install .
 import cv2
 import numpy as np
-from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 #
