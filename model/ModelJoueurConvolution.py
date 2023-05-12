@@ -290,7 +290,7 @@ class ModelJoueurConvolution:
         """
         new_seq_img = np.array(seq_img)
         if (len(new_seq_img.shape) == 3):
-            new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
+            new_seq_img = np.zeros((len(new_seq_img), seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
             for i, img in enumerate(seq_img):
                 transfer_img = np.array(img) * 255
                 transfer_img = transfer_img.astype(np.uint8)
@@ -322,7 +322,7 @@ class ModelJoueurConvolution:
         """
         new_seq_img = np.array(seq_img)
         if (len(new_seq_img.shape) == 3):
-            new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
+            new_seq_img = np.zeros((len(new_seq_img), seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
             for i, img in enumerate(seq_img):
                 transfer_img = np.array(img) * 255
                 transfer_img = transfer_img.astype(np.uint8)
