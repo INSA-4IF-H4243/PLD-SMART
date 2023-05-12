@@ -292,8 +292,10 @@ class ModelJoueurConvolution:
         if (len(new_seq_img.shape) == 3):
             new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
             for i, img in enumerate(seq_img):
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-                new_seq_img[i] = img
+                transfer_img = np.array(img) * 255
+                transfer_img = transfer_img.astype(np.uint8)
+                transfer_img = cv2.cvtColor(transfer_img, cv2.COLOR_GRAY2BGR)
+                new_seq_img[i] = transfer_img
         pred = self.model.predict(new_seq_img)
         y_pred = np.argmax(pred, axis=1)
         return y_pred
@@ -322,8 +324,10 @@ class ModelJoueurConvolution:
         if (len(new_seq_img.shape) == 3):
             new_seq_img = np.reshape(new_seq_img, (seq_img.shape[0], seq_img.shape[1], seq_img.shape[2], 3))
             for i, img in enumerate(seq_img):
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                new_seq_img[i] = img
+                transfer_img = np.array(img) * 255
+                transfer_img = transfer_img.astype(np.uint8)
+                transfer_img = cv2.cvtColor(transfer_img, cv2.COLOR_GRAY2BGR)
+                new_seq_img[i] = transfer_img
         pred = self.model.predict(new_seq_img)
         y_pred = np.argmax(pred, axis=1)
         encoder = LabelEncoder()

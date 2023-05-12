@@ -3,7 +3,6 @@ import cv2
 #!pip install .
 import cv2
 import numpy as np
-from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 #from smart.model import ModelBalle
@@ -25,7 +24,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/cut-45_ybw9T2AO.mp4'#chemin de la video
+videoPath='dataset/1980-2563.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -100,13 +99,15 @@ output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: se
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
 #JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
+model_bas = ModelJoueurConvolution.load_model_from_path("saved_models/model_joueur_bas_convolution_Maxime.h5")
+# ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
 print(model_bas.summary_model)
 #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
 #JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+model_haut = ModelJoueurConvolution.load_model_from_path("saved_models/model_joueur_haut_convolution_Henri.h5")
+# ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
 print(model_haut.summary_model)        
 #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
@@ -423,14 +424,14 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
 
     
     # #print(prected.shape)
-    # if(len(tableauSortieJBas)>15):
-    #     seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-    #     output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+    if(len(tableauSortieJBas)>15):
+        seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
+        output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
         
-    # #print(prected.shape)
-    # if(len(tableauSortieJHaut)>15):
-    #     seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-    #     output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+    #print(prected.shape)
+    if(len(tableauSortieJHaut)>15):
+        seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
+        output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
         
     ###AFFICHAGE 
     
