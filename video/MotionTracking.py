@@ -29,7 +29,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/video_test.mp4'#chemin de la video
+videoPath='dataset/clip/cut-45_ybw9T2AO.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=30#nombre d'images pour un coups
@@ -104,13 +104,13 @@ output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: se
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
 #JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_Jiaqi_bas.h5")
+model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
 print(model_bas.summary_model)
 #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
 #JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/model_classic_Jiaqi_haut.h5")
+model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
 print(model_haut.summary_model)        
 #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
@@ -349,8 +349,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         tab_prediction = np.array(tab_prediction)
         tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
         resultat = model_balle.predict(tab_prediction)
-        if resultat[0]!=4 :
-            print(resultat)
+        #if resultat[0]!=4 :
+        print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(

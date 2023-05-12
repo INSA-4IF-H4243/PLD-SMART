@@ -129,16 +129,16 @@ input_shape_model=15*50*50
 output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
-#JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
-print(model_bas.summary_model)
-#model_bas.load_model_from_path('JoueurBasTest.hdf5')
+# #JOUEUR BAS
+# model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
+# print(model_bas.summary_model)
+# #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
-#JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
-print(model_haut.summary_model)        
-#model_haut.load_model_from_path('JoueurHautTest.hdf5')
+# #JOUEUR HAUT
+# model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+# print(model_haut.summary_model)        
+# #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
 output_bas="nothing"
 output_haut="nothing"
@@ -392,14 +392,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                 print(i," : ",tabTrajectoire[i])
             trajectoire=int(input())
         else :
-            new_trajectoire = []
-            for point in tableau_position_balle :
-                    x = point[0] -10 + random.randrange(20)
-                    y = point[1] -10 + random.randrange(20)
-                    new_trajectoire.append(x)
-                    new_trajectoire.append(y)
-            new_trajectoire.append(13)
-            save_trajectoire(new_trajectoire, outPutPathBalle)
+            for i in range(20) :
+                new_trajectoire = []
+                for point in tableau_position_balle :
+                        x = point[0] -10 + random.randrange(20)
+                        y = point[1] -10 + random.randrange(20)
+                        new_trajectoire.append(x)
+                        new_trajectoire.append(y)
+                new_trajectoire.append(13)
+                save_trajectoire(new_trajectoire, outPutPathBalle)
 
         if(trajectoire != -1):
             print("Type de balle:")
