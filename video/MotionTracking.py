@@ -29,7 +29,7 @@ devMode=True#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/cut-45_ybw9T2AO.mp4'#chemin de la video
+videoPath='dataset/partie2.mp4'#chemin de la video
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=30#nombre d'images pour un coups
@@ -42,6 +42,10 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 tableau_position_balle = []
 tableau_trajectoire_balle = []
+liste_trajectoires = ['croise', 'croise amortie', 'croise lobe',
+                      'long de ligne', 'long de ligne amortie',
+                      'long de ligne lobe', 'centre', 'centre amortie',
+                      'centre lobe', 'non detecte']
 ########################METHODES TRAITEMENT CONTOURS :
 
 def aire(rec):
@@ -103,16 +107,16 @@ input_shape_model=30*100*100
 output_y=np.array([0,1,2,3]) #- 0: coup droit- 1: déplacement- 2: revers- 3: service
 all_output_label = ['coup droit', 'deplacement', 'service', 'revers']
 
-#JOUEUR BAS
-model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
-print(model_bas.summary_model)
-#model_bas.load_model_from_path('JoueurBasTest.hdf5')
+# #JOUEUR BAS
+# model_bas = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_bas.h5")
+# print(model_bas.summary_model)
+# #model_bas.load_model_from_path('JoueurBasTest.hdf5')
 
 
-#JOUEUR HAUT
-model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
-print(model_haut.summary_model)        
-#model_haut.load_model_from_path('JoueurHautTest.hdf5')
+# #JOUEUR HAUT
+# model_haut = ModelJoueurClassique.load_model_from_path("saved_models/classic_model_1_joueur_haut.h5")
+# print(model_haut.summary_model)        
+# #model_haut.load_model_from_path('JoueurHautTest.hdf5')
 
 output_bas="nothing"
 output_bas_vocal="nothing"
@@ -349,8 +353,8 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         tab_prediction = np.array(tab_prediction)
         tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
         resultat = model_balle.predict(tab_prediction)
-        #if resultat[0]!=4 :
-        print(resultat)
+        if resultat[0]!=9 :
+            print(liste_trajectoires[int(resultat)])
     
     for joueur in joueurs :
         cv2.rectangle(
@@ -423,21 +427,21 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     ###PREDICTIONS
 
     
-    #print(prected.shape)
+    # #print(prected.shape)
 
-    if(len(tableauSortieJBas)>30):
-        seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 100*100*30))
-        output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
-        # for playing note.wav file
-        if(output_bas_vocal!=output_bas):
-            path="Audio/"+output_bas+"/"+str(random.randrange(4))+".mp3"
-            print(path)
-            playsound(path,False)
-            output_bas_vocal=output_bas
-    #print(prected.shape)
-    if(len(tableauSortieJHaut)>30):
-        seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 100*100*30))
-        output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
+    # if(len(tableauSortieJBas)>30):
+    #     seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 100*100*30))
+    #     output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
+    #     # for playing note.wav file
+    #     if(output_bas_vocal!=output_bas):
+    #         path="Audio/"+output_bas+"/"+str(random.randrange(4))+".mp3"
+    #         print(path)
+    #         playsound(path,False)
+    #         output_bas_vocal=output_bas
+    # #print(prected.shape)
+    # if(len(tableauSortieJHaut)>30):
+    #     seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 100*100*30))
+    #     output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
 
     ###AFFICHAGE 
     
