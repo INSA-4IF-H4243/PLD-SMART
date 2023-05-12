@@ -13,7 +13,7 @@ devMode=False#mode Développeur (=voir les tous les contours, filtres...)
 affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=100#taille de la sortie (=entree du machine learning)
-videoPath='dataset/clip/cut-26_zJdUVeHK.mp4'#chemin de la video
+videoPath='dataset/videos/13527-13545.mp4'#chemin de la video
 outPutPathJHaut='/jqz9'#chemin d'enregistrement de la silouhette du Joueur 1
 outPutPathJBas='/jqz9'#chemin d'enregistrement de la silouhette du Joueur 2
 outPutPath="img/"            #ex : avec les 3 outputs paths cela donnera : img/JHaut/nom_coup/outPutPathJHaut/liste des images du coup
