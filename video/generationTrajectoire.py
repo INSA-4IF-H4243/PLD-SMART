@@ -30,7 +30,7 @@ def button1(event):
     y = event.y
     trajectoire.append((x,y))
 
-    can.create_rectangle(x-7, y-7, x+7, y+7)
+    can.create_rectangle(x-15, y-15, x+15, y+15)
     print("{}, {}".format(x,y))
     print(len(trajectoire))
     
@@ -45,16 +45,16 @@ def save_trajectoire(trajectoire, outPutPath) :
     if not os.path.exists(outPutPath):
         os.makedirs(outPutPath)
     
-    with open(outPutPath+'/datasetTrajectoire','a') as f :
+    with open(outPutPath+'/datasetTrajectoire.csv','a') as f :
         writer = csv.writer(f)
         writer.writerow(trajectoire)
         f.close()
 
 
-videoResize=(600,300)
-cap = cv2.VideoCapture('datasetVideos\partie1.mp4')
-for i in range(300) :
-    ret1, frame1 = cap.read()
+videoResize=(800,400)
+cap = cv2.VideoCapture('dataset/partie2.mp4')
+
+ret1, frame1 = cap.read()
 frame1=cv2.resize(frame1,videoResize)
 
 np_array = np.array(frame1)
@@ -64,10 +64,10 @@ imgpil.save("resultat.png")
 fen = tk.Tk()
 fen.geometry("1000x500")
 temp_img = tk.PhotoImage(file='resultat.png')
-can = tk.Canvas(fen, width=600, height=300)
+can = tk.Canvas(fen, width=800, height=400)
 can.pack()
 
-can.create_image(300, 150, image=temp_img)
+can.create_image(400, 200, image=temp_img)
 
 fen.bind('<Button-1>', button1)
 fen.bind('<Button-2>', button2)
@@ -79,18 +79,25 @@ type=int(input())
 if type != 0 :
 
     ## creer des trajectoires similaires
-    for i in range(100) :
+    for i in range(50) :
         new_trajectoire = []
         for point in trajectoire :
-            x = point[0] -5 + random.randrange(14)
-            y = point[1] -5 + random.randrange(14)
-            new_trajectoire.append((x,y))
+            x = point[0] -15 + random.randrange(30)
+            y = point[1] -15 + random.randrange(30)
+            new_trajectoire.append(x)
+            new_trajectoire.append(y)
 
         new_trajectoire.append(type)
         save_trajectoire(new_trajectoire,'trajectoire')
+    new_trajectoire = []
+    for point in trajectoire :
+            x = point[0]
+            y = point[1]
+            new_trajectoire.append(x)
+            new_trajectoire.append(y)
+    new_trajectoire.append(type)
 
-    trajectoire.append(type)
-    save_trajectoire(trajectoire,'trajectoire')
+    save_trajectoire(new_trajectoire,'trajectoire')
     print('trajectoires enregistrées')
 
 print("fin")

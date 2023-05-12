@@ -7,7 +7,11 @@ from smart.processor import ImageProcessor
 from smart.processor import ImageProcessor, VideoProcessor
 from smart.video import Video, Image
 from smart.model import ModelBalle
+import os
+import csv
 
+from pynput.keyboard import Key, Listener
+from pynput import keyboard
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout
 from keras.callbacks import ModelCheckpoint
@@ -26,6 +30,8 @@ affichage=True#est-ce qu'on veut afficher les resultats ou juste enregistrer ?
 enregistrementImage=True#Est-ce qu'on veut enregistrer la sortie en image ou juste en tableau de 0 et de 1
 PixelSizeOutput=50#taille de la sortie (=entree du machine learning)
 videoPath='dataset/partie2.mp4'#chemin de la video
+outPutPathBalle='trajectoire'#chemin d'enregistrement de la trajectoire de la balle
+
 fpsOutput=7#FPS de la sortie
 videoResize=(800,400)#taille pour resize de la video pour traitement (petite taille = plus rapide) 
 cutFrameNB=15#nombre d'images pour un coups
@@ -38,7 +44,22 @@ tableauSortieJHaut=[]
 tableauSortieJBas=[]
 tableau_position_balle = []
 tableau_trajectoire_balle = []
+
+tabDirection=["bas_haut","haut_bas","balle_non_detectee"]
+tabTrajectoire=["croise","centre","long de ligne"]
+tabType=["court","long","lobe","amortie"]
+k_pressed=False
 ########################METHODES TRAITEMENT CONTOURS :
+
+def on_press(key):
+        ###ENREGISTREMENT DONNEES pour les 7 dernières frames:
+    if key==keyboard.Key.space:
+
+        global k_pressed
+        k_pressed=True
+
+key_listener = keyboard.Listener(on_press=on_press)
+key_listener.start()
 
 def aire(rec):
     return rec[2]*rec[3]
@@ -90,6 +111,15 @@ def englobe(rec1, rec2) :
     if (rec1[0] <= (rec2[0]+10) and rec1[1] <= (rec2[1]+10) and (rec1[0]+rec1[2]) >= (rec2[0]+rec2[2]-10) and (rec1[1]+rec1[3]) >= (rec2[1]+rec2[3]-10) ) or (rec2[0] <= (rec1[0]+10) and rec2[1] <= (rec1[1]+10) and (rec2[0]+rec2[2]) >= (rec1[0]+rec1[2]-10) and (rec2[1]+rec2[3]) >= (rec1[1]+rec1[3]-10) ):
         return True
     return False
+
+def save_trajectoire(trajectoire, outPutPath) :
+    if not os.path.exists(outPutPath):
+        os.makedirs(outPutPath)
+    
+    with open(outPutPath+'/dataset.csv','a') as f :
+        writer = csv.writer(f)
+        writer.writerow(trajectoire)
+        f.close()
 
 
 ########REASEAU DE NEURONES:
@@ -184,12 +214,6 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
     transformations.append(util.filter(transformations[-1], "dilation"))
     cv2.imshow("gray", transformations[-1])
 
-    # transformations.append(util.filter(transformations[-1], "dilation", parameters["filter"]))
-    # cv2.imshow("dilation", transformations[-1])
-
-    # transformations.append(cv2.medianBlur(transformations[-1], 5))
-    # cv2.imshow("blur", transformations[-1])
-
     ###RECHERCHE CONTOURS DES FORMES EN MOUVEMENT
     contours, hierarchy = cv2.findContours(
     transformations[-1], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -248,14 +272,10 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
         for rec in tab_rec: 
             #joueur du haut          
             if distance2(joueurs[0],rec) < distance2(joueurs[0],minJoueur0) and (centre(rec)[1]<milieu_y):
-                #if distance2(joueurs[0],rec) < 5*5:
-                    # if devMode:print("joueur0")
-                    # if devMode:print(similarite(joueurs[0],rec))
                     minJoueur0=rec
                     b0 = 1
             #joueur du bas
             elif distance2(joueurs[1],rec) < distance2(minJoueur1,joueurs[1]) and (centre(rec)[1]>milieu_y):
-                #if distance2(joueurs[1],rec) < 5*5:
                     minJoueur1=rec  
                     b1 = 1 
         if b0:
@@ -337,15 +357,15 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                             tableau_position_balle[i-j] = (x,y)
                 no_pos = 0
 
-        tab_prediction = []
-        for point in tableau_position_balle :
-            tab_prediction.append(point[0])
-            tab_prediction.append(point[1])
-        tab_prediction = np.array(tab_prediction)
-        tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
-        resultat = model_balle.predict(tab_prediction)
-        if resultat[0]!=4 :
-            print(resultat)
+        # tab_prediction = []
+        # for point in tableau_position_balle :
+        #     tab_prediction.append(point[0])
+        #     tab_prediction.append(point[1])
+        # tab_prediction = np.array(tab_prediction)
+        # tab_prediction = np.reshape(tab_prediction, (1, len(tab_prediction)))
+        # resultat = model_balle.predict(tab_prediction)
+        # if resultat[0]!=4 :
+        #     print(resultat)
     
     for joueur in joueurs :
         cv2.rectangle(
@@ -356,88 +376,110 @@ while cap.isOpened() and ret3:#attention video qui s'arete au premier probleme d
                     transformations[0], (balle[0] + xmin - 10, balle[1] + ymin - 10), (balle[0] + xmin + balle[2], balle[1] + ymin + balle[3]), (0, 255, 0), 2
                 )  # ball
     
-    x_bas=round(joueurs[1][0] + xmin - 10)
-    y_bas=round(joueurs[1][1] + ymin - 10)
-    w_bas=round(joueurs[1][0] + xmin + joueurs[1][2] - x_bas)
-    h_bas=round(joueurs[1][1] + ymin + joueurs[1][3] - y_bas)
-    affichageJBas=(x_bas, y_bas, w_bas, h_bas)
-
-    x_haut=round(joueurs[0][0] + xmin - 10)
-    y_haut=round(joueurs[0][1] + ymin - 10)
-    w_haut=round(joueurs[0][0] + xmin + joueurs[0][2] - x_haut)
-    h_haut=round(joueurs[0][1] + ymin + joueurs[0][3] - y_haut)
-    affichageJHaut=(x_haut, y_haut, w_haut, h_haut)
-    ###DESSIN DU CONTOUR DES JOUEURS)
-    cv2.rectangle(
-        transformations[0], (x_bas,y_bas),(x_bas + w_bas, y_bas + h_bas), (255, 0, 255), 2)
-    cv2.rectangle(
-        transformations[0], (x_haut,y_haut),(x_haut + w_haut, y_haut + h_haut) , (0, 255, 255), 2)         
-
-    
-
-    ###RECUPERATION SILOUHETTE 
-    (x, y, w, h) = affichageJHaut
-    (x1, y1, w1, h1) = affichageJBas
-
-    transfomations_joueurs = []
-    transfomations_joueurs.append(cv2.resize(frame3, (800,400)))
-    transfomations_joueurs.append(transfomations_joueurs[-1][ymin:ymax, xmin:xmax])
-    transfomations_joueurs.append(cv2.cvtColor(transfomations_joueurs[-1], cv2.COLOR_BGR2GRAY))
-    transfomations_joueurs.append(subtractor_joueurs.apply(transfomations_joueurs[-1]))
-    # cv2.rectangle(
-    #     transfomations_joueurs[3], (joueurs[0][0],joueurs[0][1]),(joueurs[0][0] + joueurs[0][2], joueurs[0][1] + joueurs[0][3]), (255, 255, 255), 2)
-    # cv2.rectangle(
-    #     transfomations_joueurs[3], (joueurs[1][0],joueurs[1][1]),(joueurs[1][0] + joueurs[1][2], joueurs[1][1] + joueurs[1][3]) , (255, 255, 255), 2) 
-    try:
-
-        # crop_imgBas = imageProcessor.crop_frame_shadow_player(transformations[0], x1, x1+w1, y1, y1+h1)
-        # crop_imgHaut = imageProcessor.crop_frame_shadow_player(transformations[0], x, x+w, y, y+h)
-        # silouhetteHaut = imageProcessor.resize_img(crop_imgHaut,(50, 50), interpolation=cv2.INTER_LINEAR)  
-        # silouhetteBas = imageProcessor.resize_img(crop_imgBas, (50, 50), interpolation=cv2.INTER_LINEAR)
-        
-        silouhetteBas  = transfomations_joueurs[3][max(0,joueurs[1][1]-15):joueurs[1][1] + joueurs[1][3]+30,max(0,joueurs[1][0]-15):joueurs[1][0] + joueurs[1][2]+30]
-        
-        silouhetteBas=np.ceil(silouhetteBas/255)*255
-        silouhetteBas=util.filter(silouhetteBas, "closing",parameters_silouhette["filter"])
-        silouhetteBas=cv2.resize(silouhetteBas,(PixelSizeOutput,PixelSizeOutput))
-    except:
-        silouhetteBas = np.zeros((PixelSizeOutput,PixelSizeOutput))
-
-    try:
-        silouhetteHaut = transfomations_joueurs[3][max(joueurs[0][1]-15,0):joueurs[0][1] + joueurs[0][3]+30,max(0,joueurs[0][0]-15):joueurs[0][0] + joueurs[0][2]+30]
-        silouhetteHaut=np.ceil(silouhetteHaut/255)*255
-        silouhetteHaut=util.filter(silouhetteHaut, "closing",parameters_silouhette["filter"])
-        silouhetteHaut=cv2.resize(silouhetteHaut,(PixelSizeOutput,PixelSizeOutput))
-    except:
-        silouhetteHaut = np.zeros((PixelSizeOutput,PixelSizeOutput))
-
-    ###ENREGISTREMENT des silouhettes dans le TABLEAU
-    tableauSortieJHaut.append(silouhetteHaut/255)
-    tableauSortieJBas.append(silouhetteBas/255)
-    
-    ###PREDICTIONS
-
-    
-    # #print(prected.shape)
-    # if(len(tableauSortieJBas)>15):
-    #     seq_vid_bas=np.array(tableauSortieJBas[len(tableauSortieJBas)-cutFrameNB:len(tableauSortieJBas)]).reshape((1, 15*50*50))
-    #     output_bas = model_bas.predict_label(seq_vid_bas, all_output_label)[0]
-        
-    # #print(prected.shape)
-    # if(len(tableauSortieJHaut)>15):
-    #     seq_vid_haut=np.array(tableauSortieJHaut[len(tableauSortieJHaut)-cutFrameNB:len(tableauSortieJHaut)]).reshape((1, 15*50*50))
-    #     output_haut = model_haut.predict_label(seq_vid_haut, all_output_label)[0]
-        
-    ###AFFICHAGE 
-    
-    frame1=cv2.putText(transformations[0], output_haut, (affichageJHaut[0], affichageJHaut[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
-    frame1=cv2.putText(transformations[0], output_bas, (affichageJBas[0], affichageJBas[1]), cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 2)
-
     cv2.imshow("feed", transformations[0])
-    #if(devMode):cv2.imshow("feed2", dilated)
-    if devMode:cv2.imshow("test", transfomations_joueurs[3])
-    cv2.imshow("JoueurHaut : ", silouhetteHaut)
-    cv2.imshow("JoueurBas : ", silouhetteBas)
+
+    if(k_pressed==True):
+        trajectoire = -1
+        type = -1
+        print("Direction:")
+        for i in range(len(tabDirection)):
+            print(i," : ",tabDirection[i])
+        direction=int(input())
+
+        if direction == 0 or direction == 1 :
+            print("Trajectoire:")
+            for i in range(len(tabTrajectoire)):
+                print(i," : ",tabTrajectoire[i])
+            trajectoire=int(input())
+        else :
+            new_trajectoire = []
+            for point in tableau_position_balle :
+                    x = point[0] -10 + random.randrange(20)
+                    y = point[1] -10 + random.randrange(20)
+                    new_trajectoire.append(x)
+                    new_trajectoire.append(y)
+            new_trajectoire.append(13)
+            save_trajectoire(new_trajectoire, outPutPathBalle)
+
+        if(trajectoire != -1):
+            print("Type de balle:")
+            if trajectoire == 0 or trajectoire == 1 or trajectoire == 2:
+                for i in range(len(tabType)):
+                    print(i," : ",tabType[i])
+                type=int(input())
+
+        if (type != -1) : 
+            
+            for i in range(20) :
+                new_trajectoire = []
+                for point in tableau_position_balle :
+                    x = point[0] -10 + random.randrange(20)
+                    y = point[1] -10 + random.randrange(20)
+                    new_trajectoire.append(x)
+                    new_trajectoire.append(y)
+
+                if trajectoire == 0 and type ==0 : 
+                    new_trajectoire.append(1)
+                elif trajectoire == 0 and type ==1 : 
+                    new_trajectoire.append(2)
+                elif trajectoire == 0 and type ==2 : 
+                    new_trajectoire.append(4)
+                elif trajectoire == 0 and type ==3 : 
+                    new_trajectoire.append(3)
+                elif trajectoire == 1 and type ==0 : 
+                    new_trajectoire.append(9)
+                elif trajectoire == 1 and type ==1 : 
+                    new_trajectoire.append(10)
+                elif trajectoire == 1 and type ==2 : 
+                    new_trajectoire.append(12)
+                elif trajectoire == 1 and type ==3 : 
+                    new_trajectoire.append(11)
+                elif trajectoire == 2 and type ==0 : 
+                    new_trajectoire.append(5)
+                elif trajectoire == 2 and type ==1 : 
+                    new_trajectoire.append(6)
+                elif trajectoire == 2 and type ==2 : 
+                    new_trajectoire.append(8)
+                else : 
+                    new_trajectoire.append(7)
+                save_trajectoire(new_trajectoire,outPutPathBalle)         
+
+            new_trajectoire = []
+            for point in tableau_position_balle :
+                    x = point[0] -10 + random.randrange(20)
+                    y = point[1] -10 + random.randrange(20)
+                    new_trajectoire.append(x)
+                    new_trajectoire.append(y)
+
+            if trajectoire == 0 and type ==0 : 
+                new_trajectoire.append(1)
+            elif trajectoire == 0 and type ==1 : 
+                new_trajectoire.append(2)
+            elif trajectoire == 0 and type ==2 : 
+                new_trajectoire.append(4)
+            elif trajectoire == 0 and type ==3 : 
+                new_trajectoire.append(3)
+            elif trajectoire == 1 and type ==0 : 
+                new_trajectoire.append(9)
+            elif trajectoire == 1 and type ==1 : 
+                new_trajectoire.append(10)
+            elif trajectoire == 1 and type ==2 : 
+                new_trajectoire.append(12)
+            elif trajectoire == 1 and type ==3 : 
+                new_trajectoire.append(11)
+            elif trajectoire == 2 and type ==0 : 
+                new_trajectoire.append(5)
+            elif trajectoire == 2 and type ==1 : 
+                new_trajectoire.append(6)
+            elif trajectoire == 2 and type ==2 : 
+                new_trajectoire.append(8)
+            else : 
+                new_trajectoire.append(7)
+
+            save_trajectoire(new_trajectoire, outPutPathBalle)
+
+        print("\nséquence enregistrée, reprise...\n")
+        k_pressed=False
 
     ###CONTINUER LA LECTURE DE LA VIDEO
     ret3, frame3 = cap.read()
